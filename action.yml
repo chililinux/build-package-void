@@ -1,0 +1,370 @@
+name: "VoidLinux ISO Builder"
+description: "Action to build a custom ISO for VoidLinux"
+
+inputs:
+  teste_input:
+    type: boolean
+    description: "Enable only test"
+    required: false
+    default: false
+  vol_id:
+    description: "Nome do VOLUME da ISO"
+    required: true
+    default: "VOID_LIVE"
+  edition:
+    description: "Edition of the ISO"
+    required: true
+    default: "xfce"
+    options:
+      - base
+      - xfce
+      - awesome
+      - enlightnment
+      - fluxbox
+      - gnome
+      - kde
+      - all
+  tmate:
+    description: "Enable debugging with tmate"
+    required: false
+  release_tag:
+    description: "Release tag for the ISO"
+    required: false
+  github_token:
+    description: "GitHub token for authentication"
+    required: true
+
+outputs:
+  iso_path:
+    description: "Path to the generated ISO file"
+    value: ${{ steps.build.outputs.iso_path }}
+  release_name:
+    description: "Name of the release"
+    value: ${{ steps.prepare-iso.outputs.release_name }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Debug teste_input
+      shell: bash
+      run: |
+        echo "teste_input: '${{ inputs.teste_input }}'"
+
+    - name: Definir a função send_telegram_message no script temporário
+      shell: bash
+      env:
+        TELEGRAM_TOKEN: "${{ inputs.telegram_token }}"
+        TELEGRAM_CHAT_ID: "${{ inputs.telegram_chat_id }}"
+      run: |
+        #Definir a função send_telegram_message no script temporário
+        cat << 'EOF' > /tmp/send_telegram_message.sh
+        export TERM=${TERM:-xterm}
+        export TERM=${TERM:-xterm-256color}
+
+        #Definindo variáveis de cores
+        export green="\033[01;32m"
+        export red="\033[01;31m"
+        export blue="\033[01;34m"
+        export cyan="\033[01;36m"
+        export pink="\033[01;35m"
+        export yellow="\033[01;33m"
+        export reset="\033[0m"
+        alias ls='ls -lha --color=auto'
+        alias dir='ls -lha --color=auto'
+
+        msg() {
+          local msg="$1"
+          msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
+          echo -e "build-iso-void=>${cyan}running: ${yellow}${msg}${reset}"
+        }
+
+        msg_info() {
+          local msg="$1"
+          msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
+          echo -e "build-iso-void=>${yellow}info   : ${cyan}${msg}${reset}"
+        }
+
+        msg_warning() {
+          local msg="$1"
+          msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
+          echo -e "build-iso-void=>${red}warning: ${orange}${msg}${reset}"
+        }
+
+        replicate() {
+          local char=${1:-'#'}
+          local nsize=${2:-$(tput cols)}
+          local line
+          #printf -v line "%*s" "$nsize" && echo "${line// /$char}"
+          #printf -v line "%*s" "$nsize" && echo -e "\033[31m${line// /$char}\033[0m"
+          printf -v line "%*s" "$nsize" && echo -e "${blue}${line// /$char}${reset}"
+        }
+        export -f replicate
+
+        send_telegram_message() {
+          local message="$1"
+          local parse_mode="$2"
+
+          # Define parse_mode como "MarkdownV2" se não for especificado
+          [[ -z $parse_mode ]] && parse_mode="HTML"
+
+          # Remove as tags HTML e exibe o resultado no terminal
+          echo -e "${red}$(sed 's/<[^>]*>//g' <<< "$message")${reset}"
+          # Envia a mensagem original com HTML para o Telegram
+          curl -s -X POST "https://api.telegram.org/bot${{ inputs.telegram_token }}/sendMessage" \
+            -d chat_id="${{ inputs.telegram_chat_id }}" \
+            -d text="$message" \
+            -d parse_mode="$parse_mode"
+        }
+        export -f send_telegram_message
+        EOF
+
+    - name: Display the current user in CONTAINER
+      shell: bash
+      run: |
+        #Display the current user in CONTAINER
+        source /tmp/send_telegram_message.sh
+        replicate '='
+        echo -e "${cyan}Current host is     : ${yellow}$(hostname)${reset}"
+        echo -e "${cyan}Current user is     : ${yellow}$(whoami)${reset}"
+        echo -e "${cyan}Current user ID is  : ${yellow}$(id -u)${reset}"
+        echo -e "${cyan}Current user details: ${yellow}$(id)${reset}"
+        replicate '='
+        echo 'df -hT || true'
+        df -hT || true
+        replicate '='
+        echo 'ls -la /mnt || true'
+        ls -la /mnt || true
+        replicate '='
+
+    - name: Setup build environment
+      shell: bash
+      run: |
+        # Setup build environment
+        {
+        echo 'repository=https://repo-fastly.voidlinux.org/current'
+        echo 'repository=https://repo-fastly.voidlinux.org/current/nonfree'
+        echo 'repository=https://repo-fastly.voidlinux.org/current/multilib'
+        echo 'repository=https://repo-fastly.voidlinux.org/current/multilib/nonfree'
+        } >> /etc/xbps.d/00-repository-main.conf
+
+        # atualizar e instalar pacotes adicionais
+        xbps-install -Sy -f \
+          tree \
+          duf > /dev/null
+
+    - name: Configurar o ambiente
+      shell: bash
+      run: |
+        #Configurar o ambiente
+        #WORK_PATH='/__w/build-iso-void/build-iso-void'
+        #PROFILE_PATH='/__w/build-iso-void/build-iso-void/chili-void-mklive'
+        WORK_PATH="/__w/${{env.REPO_NAME}}/${{env.REPO_NAME}}"
+        PROFILE_PATH="/__w/${{env.REPO_NAME}}/${{env.REPO_NAME}}/chili-void-mklive"
+        BASHRC_PATH="/__w/${{env.REPO_NAME}}/${{env.REPO_NAME}}/chili-void-bashrc"
+        echo "WORK_PATH=$WORK_PATH"       >> "$GITHUB_ENV"  # Exporta WORK_PATH para outras etapas
+        echo "PROFILE_PATH=$PROFILE_PATH" >> "$GITHUB_ENV"  # Exporta WORK_PATH para outras etapas
+        echo "BASHRC_PATH=$BASHRC_PATH"   >> "$GITHUB_ENV"  # Exporta WORK_PATH para outras etapas
+
+    - name: Checkout chili-void-mklive
+      if: ${{ inputs.teste_input != true }}
+      shell: bash
+      run: |
+        #Checkout chili-void-mklive
+        #REPO="${{ inputs.iso_profiles_repo }}"
+        REPO="https://github.com/chililinux/chili-void-mklive"
+        echo "Repository: $REPO"
+
+        rm -rf "$PROFILE_PATH" || true
+        if ! git clone --depth 1 "$REPO" "$PROFILE_PATH"; then
+          echo "Falha ao clonar o repositorio $REPO em $PROFILE_PATH"
+          exit 1
+        fi
+        # ativando 'git config --global --add safe.directory'
+        git config --global --add safe.directory "$PROFILE_PATH" || true
+
+        # clean '/__t/' directory
+        rm -rf /__t/* || true
+
+    - name: Checkout chili-void-bashrc
+      if: ${{ inputs.teste_input != true }}
+      shell: bash
+      run: |
+        #Checkout chili-void-bashrc
+        source /tmp/send_telegram_message.sh
+        msg "Checkout chili-void-bashrc"
+        replicate '='
+        #REPO="${{ inputs.iso_profiles_repo }}"
+        REPO="https://github.com/chililinux/chili-void-bashrc"
+        echo "Repository: $REPO"
+
+        rm -rf "$BASHRC_PATH" || true
+        if ! git clone --depth 1 "$REPO" "$BASHRC_PATH"; then
+          echo "Falha ao clonar o repositorio $REPO em $BASHRC_PATH"
+          exit 1
+        fi
+        # ativando 'git config --global --add safe.directory'
+        git config --global --add safe.directory "$BASHRC_PATH" || true
+        replicate '='
+
+    - name: Ajustar ambiente
+      shell: bash
+      run: |
+        #Ajustar ambiente
+        source /tmp/send_telegram_message.sh
+        msg "Ajustar ambiente"
+        replicate '='
+        ln -sfv "$WORK_PATH" /work_path         || true
+        cp -Rpa "$BASHRC_PATH"/etc/. /etc/ || true
+
+        configure_users_path() {
+          local apaths=('/root' '/github/home' '/home/builduser')
+          local cpath
+
+          for cpath in "${apaths[@]}"; do
+            replicate '#'
+            msg "Ajustar ambiente de $cpath"
+            pushd "$cpath"                      || true
+            cp -Rpa "$BASHRC_PATH"/etc/skel/. . || true
+            #itera sobre todos os arquivos e diretórios no diretório atual cujo nome começa com dot..
+            for f in dot.*; do
+              #remove o prefixo dot. do nome do arquivo ou diretório.
+              new_file="${f/dot/}"
+              mv -f "${f}" "$new_file" || true
+            done
+            popd || true
+            replicate '#'
+          done
+
+          #msg "Ajustar ambiente do user 'builduser'"
+          #sudo -u builduser bash << EOF
+          pushd /home/builduser/              || true
+          #cp -Rpa "$BASHRC_PATH"/etc/skel/. . || true
+          #itera sobre todos os arquivos e diretórios no diretório atual cujo nome começa com dot..
+          #for f in dot.*; do
+          #  #remove o prefixo dot. do nome do arquivo ou diretório.
+          #  new_file="${f/dot/}"
+          #  mv -f "${f}" "$new_file" || true
+          #done
+          sudo chown builduser: . -R || true
+          popd || true
+          #EOF
+          replicate '='
+        }
+        configure_users_path
+
+    - name: Check DEBUG Condition
+      if: ${{ env.DEBUG == 'true' }}
+      shell: bash
+      run: |
+        #Check DEBUG Condition
+        source /tmp/send_telegram_message.sh
+        replicate '='
+        echo "DEBUG is true. Activating TMATE."
+        replicate '='
+
+    - name: Setup TMATE Session in CONTAINER
+      uses: mxschmitt/action-tmate@v3
+      if: env.DEBUG == 'true'
+      with:
+        install-dependencies: false
+        detached: true
+
+    - name: Build ISO void-live-${{ github.event.client_payload.edition || inputs.edition}}-x86_64_${{ github.event.client_payload.release_tag || inputs.release_tag }}
+      if: ${{ inputs.teste_input != true }}
+      shell: bash
+      env:
+        DEBUG: "${{ inputs.tmate }}"
+        TESTE: "${{ inputs.teste_input }}"
+        VOL_ID: "${{ inputs.vol_id }}"
+        EDITION: "${{ inputs.edition }}"
+        RELEASE_TAG: "${{ inputs.release_tag }}"
+      run: |
+        #BUILD ISO Image
+        source /tmp/send_telegram_message.sh
+        msg "BUILD ISO Image"
+        # Check if directory exists before proceeding
+        if [[ ! -d "$PROFILE_PATH" ]]; then
+          msg_warning "ERRO(L427): Diretório $PROFILE_PATH não encontrado!"
+          exit 1
+        fi
+
+        build_iso() {
+          local BUILD_COMMAND
+
+          case "$EDITION" in
+            base)         BUILD_COMMAND='sudo ./mkiso'    ;;
+            awesome)      BUILD_COMMAND='sudo ./mkiso -W' ;;
+            cinnamon)     BUILD_COMMAND='sudo ./mkiso -N' ;;
+            enlightnment) BUILD_COMMAND='sudo ./mkiso -E' ;;
+            fluxbox)      BUILD_COMMAND='sudo ./mkiso -F' ;;
+            gnome)        BUILD_COMMAND='sudo ./mkiso -G' ;;
+            kde)          BUILD_COMMAND='sudo ./mkiso -P' ;;
+            xfce)         BUILD_COMMAND='sudo ./mkiso -Y' ;;
+            all)          BUILD_COMMAND='sudo ./mkiso -A' ;;
+            *)            BUILD_COMMAND='sudo ./mkiso'    ;;
+          esac
+
+          msg "########################## RESUMO ######################################################"
+          echo "DEBUG (tmate)            : $DEBUG"
+          echo "TESTE                    : ${{ inputs.teste_input }}"
+          echo "VOL_ID                   : $VOL_ID"
+          echo "EDITION                  : $EDITION"
+          echo "RELEASE_TAG              : $RELEASE_TAG"
+          echo "########################################################################################"
+          echo "BUILD COMMAND            : $BUILD_COMMAND"
+          echo "WORK_PATH                : $WORK_PATH"
+          echo "PROFILE_PATH             : $PROFILE_PATH"
+          echo "ISO profiles path        : $PROFILE_PATH/$EDITION"
+          echo "PATH_MANJARO_ISO_PROFILES: $PATH_MANJARO_ISO_PROFILES"
+          #echo "########################################################################################"
+          #echo "ROOT_RUN_DIR             : $(< /root/.config/manjaro-tools/iso-profiles.conf)"
+          #echo "BUILDUSER_RUN_DIR        : $(< /home/builduser/.config/manjaro-tools/iso-profiles.conf)"
+          msg "########################################################################################"
+
+          pushd "$PROFILE_PATH"
+          #teste
+          #echo "Arquivo 1 de teste" > arquivo1.txt
+          #echo "Arquivo 2 de teste" > arquivo2.txt
+          #tar -cvJf void-live-base-custom-x86_64-6.6.51_1-20240920-1810.tar.xz arquivo1.txt arquivo2.txt
+          #efetivo
+          #[[ ${{ inputs.tmate }} == true ]] && ./mkiso || ./mkiso > /dev/null
+          eval "$BUILD_COMMAND"
+          popd
+        }
+
+        cleanup_and_move_files() {
+          OUTPUT_ISO_PATH_NAME=$(find "$PROFILE_PATH" -type f -name "*.iso" -exec stat -c '%Y %n' {} + | sort -nr | awk 'NR==1 {print $2}')
+          ISO_BASENAME=$(basename "$OUTPUT_ISO_PATH_NAME")
+
+          echo "OUTPUT_ISO_PATH_NAME=$OUTPUT_ISO_PATH_NAME" >> "$GITHUB_ENV"  # Exporta OUTPUT_ISO_PATH_NAME para outras etapas
+          echo "ISO_BASENAME=$ISO_BASENAME"                 >> "$GITHUB_ENV"  # Exporta OUTPUT_ISO_PATH_NAME para outras etapas
+
+          if [[ -n "$OUTPUT_ISO_PATH_NAME" ]]; then
+            mv -fv "$OUTPUT_ISO_PATH_NAME" "$WORK_PATH/" || echo "ERRO: Falha ao mover arquivo ISO $OUTPUT_ISO_PATH_NAME"
+            # Set environment variables
+            echo "ISO_FULLNAME=$WORK_PATH/$ISO_BASENAME" >> "$GITHUB_ENV"
+          fi
+        }
+
+        main() {
+          build_iso
+          cleanup_and_move_files
+        }
+        main
+
+    - name: Extrair data do nome do arquivo .iso e definir tag_name
+      if: ${{ inputs.teste_input != true }}
+      id: set-tag-name
+      shell: bash
+      run: |
+        FILENAME="$ISO_BASENAME"
+        TAG_NAME=$(echo "$FILENAME" | grep -oP '\d{8}')-$(date +%H%M)
+        echo "ISO_TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+
+    - name: Set ISO path
+      if: ${{ inputs.teste_input != true }}
+      shell: bash
+      run: |
+        # Set outputs
+        echo "iso_path=$WORK_PATH/$ISO_BASENAME" >> "$GITHUB_OUTPUT"
+        echo "ISO_PATH=$WORK_PATH/$ISO_BASENAME" >> $GITHUB_ENV

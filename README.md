@@ -1,3 +1,3 @@
-# chili-pkgbuild-template
+# build-package-void
 
-Template for Chili Linux packages
+Package Generator for VoidLinux
