@@ -320,8 +320,8 @@ jobs:
       - name: Ajustar permissão
         run: |
           #Ajustar permissão
-          sudo chmod 1777 /__w/
-          sudo chown builduser:builduser /__w/ -R
+          sudo chmod 1777 /home/runner/work/
+          sudo chown builduser:builduser /home/runner/work/ -R
 
       - name: Download artifact shared-file
         uses: actions/download-artifact@v4
