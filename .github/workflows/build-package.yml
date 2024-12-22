@@ -96,8 +96,8 @@ env:
   started_by_user: "${{ github.actor }}"
   triggered_by_user: "${{ github.triggering_actor }}"
   repo_path: "${{ secrets.PKGBUILD_DIR }}"
-  DEBUG: "${{ github.event.client_payload.tmate || inputs.tmate || false }}"
-  tmate: "${{ github.event.client_payload.tmate || inputs.tmate || false }}"
+  DEBUG: "${{ github.event.client_payload.tmate || inputs.tmate }}"
+  tmate: "${{ github.event.client_payload.tmate || inputs.tmate }}"
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
 
@@ -313,7 +313,7 @@ jobs:
     steps:
       - name: Setup TMATE Session
         uses: mxschmitt/action-tmate@v3
-        if: ${{ env.DEBUG == true }}
+        if: ${{ env.DEBUG }}
         with:
           install-dependencies: false
           detached: true
