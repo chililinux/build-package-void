@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-#
-#  build-package.yml
+##  build-package.yml
 #  Created: 2024/09/15 - 08:10
-#  Altered: 2024/11/19 - 01:10
+#  Altered: qua 20 nov 2024 10:00:22 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -27,10 +26,14 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 #  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
-name: 📦 VoidLinux Build Packages
+name: 📦Build Packages VoidLinux
 
+# Gatilhos para o workflow
 on:
-  repository_dispatch:
+  #  push:
+  #    branches:
+  #      - main
+  repository_dispatch: # aguarda um evento externo para iniciar o workflow (útil para automações externas que acionam o GitHub Actions).
     types:
       - "*"
       - "!aur-*"
@@ -73,6 +76,10 @@ on:
         required: false
         type: string
 
+  schedule:
+    #- cron: "0 6 * * *" # Roda todo dia às 06:00 UTC
+    - cron: "0 18 * * 5" # Roda toda sexta-feira às 18:00 UTC
+
 env:
   BRANCH_TYPE: "${{ github.event.client_payload.branch_type || github.event.inputs.branch_type }}"
   NEW_BRANCH: "${{ github.event.client_payload.branch || github.event.inputs.new_branch }}"
@@ -81,10 +88,10 @@ env:
   REPO_ORIGEM: "${{ github.event.client_payload.url }}"
   BRANCH_FULLNAME: "${{ github.event.client_payload.branch }}"
   TELEGRAM_TOKEN: "${{ secrets.TOKEN_BOT }}"
-  CHAT_ID: "${{ secrets.CHAT_ID }}"
   #GITHUB_TOKEN: "${{ secrets.TOKEN_RELEASE }}"
   #GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
   GITHUB_TOKEN: "${{ secrets.ORGANIZATION_TOKEN }}"
+  CHAT_ID: "${{ secrets.CHAT_ID }}"
   started_by_user: "${{ github.actor }}"
   triggered_by_user: "${{ github.triggering_actor }}"
   repo_path: "${{ secrets.PKGBUILD_DIR }}"
@@ -94,25 +101,59 @@ env:
 jobs:
   setup:
     runs-on: ubuntu-latest
-    container:
-      image: vcatafesta/vcatafesta/voidlinux-docker:1.4
-      options: --privileged
+    outputs:
+      time: ${{ steps.time.outputs.time }} # Saída do job
+      REPOSITORY_NAME: ${{ steps.get-repo-name.outputs.repo_name }}
     steps:
+      - name: Obter a hora atual
+        id: time
+        run: |
+          #Obter a hora atual
+          #echo "::set-output name=time::$(date +'%Y.%m.%d-%H%M')"
+          echo "time=$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_OUTPUT
+
       - name: Capturar hora de início do workflow
         id: start-time
+        shell: bash
         run: |
           START_TIME=$(date +"%Y-%m-%d %H:%M:%S")  # Hora completa
           START_TIMESTAMP=$(date +%s)  # Timestamp em segundos
           echo "Início do Workflow: $START_TIME"
-          echo "START_TIME=$START_TIME" >> $GITHUB_ENV
-          echo "START_TIMESTAMP=$START_TIMESTAMP" >> $GITHUB_ENV
+          echo "START_TIME=$START_TIME"             >> $GITHUB_ENV
+          echo "START_TIMESTAMP=$START_TIMESTAMP"   >> $GITHUB_ENV
+          echo "START_TIME='$START_TIME'"           >> shared_file.txt
+          echo "START_TIMESTAMP='$START_TIMESTAMP'" >> shared_file.txt
+
+      - name: Install dependencies in HOST
+        shell: bash
+        run: |
+          #Install dependencies in HOST
+          #sudo apt-get update
+          #sudo apt-get autoremove
+          #sudo apt-get install -y inetutils-tools duf tree tmate
+          sudo apt-get install -y inetutils-tools duf tree
+
+      #      - name: Setup TMATE Session in HOST
+      #        uses: mxschmitt/action-tmate@v3
+      #        with:
+      #          install-dependencies: false
+      #          detached: true
+
+      - name: Set up volume directory in HOST
+        shell: bash
+        run: |
+          #Set up volume directory in HOST
+          sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso
+          sudo mkdir -p /mnt/var_cache_manjaro_tools_iso
+          sudo mkdir -p /mnt/lfs
 
       - name: Enviar notificação para o Telegram
         shell: bash
         run: |
+          #Enviar notificação para o Telegram
           started_by_user="${{ github.actor }}"
-          triggered_by_user="${{ github.triggering_actor }}"
-          repo_path="${{ secrets.PKGBUILD_DIR }}"
+					triggered_by_user="${{ github.triggering_actor }}"
+					repo_path="${{ secrets.PKGBUILD_DIR }}"
           link_action=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
 
           MESSAGE="⭐ <b>[step 1/6] build-package-void - INICIANDO WORKFLOW DE CRIAÇÃO DE PACOTE</b>
@@ -132,17 +173,217 @@ jobs:
             -d text="${MESSAGE}" \
             -d parse_mode="HTML"
 
-      - uses: actions/checkout@v4
+      #      - name: Cria um arquivo de variaveis para compartilhar entre jobs
+      #        shell: bash
+      #        run: |
+      #          #Cria um arquivo de variaveis para compartilhar entre jobs
+      #          echo "START_TIME='$START_TIME'"           >> shared_file.txt
+      #          echo "START_TIMESTAMP='$START_TIMESTAMP'" >> shared_file.txt
+      #          echo "ISO_BRANCH='$iso_branch'"           >> shared_file.txt
+
+      - name: Obter nome do repositório
+        id: get-repo-name
+        run: |
+          #Obter nome do repositório
+          #echo "::set-output name=repo_name::$(basename $GITHUB_REPOSITORY)"
+          echo "repo_name=$(basename $GITHUB_REPOSITORY)" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          fetch-depth: 0
+          name: shared-file
+          path: shared_file.txt
+
+      - name: Display the current user in HOST
+        run: |
+          # Display the current user in host
+          echo "#########################################"
+          echo "Current host is: $(hostname)"
+          echo "Current user is: $(whoami)"
+          echo "Current user ID is: $(id -u)"
+          echo "Current user details:"
+          id
+          echo "#########################################"
+          #df -hT
+          duf
+          echo "#########################################"
+          ls -lah --color=auto /mnt
+          echo "#########################################"
+
+  build:
+    name: Build Package VoidLinux
+    runs-on: ubuntu-latest
+    needs: [setup] # Espera o job "setup" terminar
+    env:
+      #REPO_NAME: ${{ needs.set-repo-name.outputs.REPOSITORY_NAME }} # Acesso à variável de ambiente definida no job anterior
+      REPO_NAME: "${{ github.repository }}"
+    container:
+      #image: vcatafesta/voidlinux-docker:latest
+      #image: vcatafesta/voidlinux-docker:1.1
+      image: vcatafesta/vcatafesta/voidlinux-docker:1.4
+      options: --privileged
+      volumes:
+        - /mnt/var_lib_manjaro_tools_buildiso:/var/lib/manjaro-tools/buildiso
+        - /mnt/var_cache_manjaro_tools_iso:/var/cache/manjaro-tools/iso
+        - /mnt/lfs:/mnt/lfs
+
+    steps:
+      - name: Download artifact shared-file
+        uses: actions/download-artifact@v4
+        with:
+          name: shared-file
+
+      - name: Exibir e carregar variáveis do arquivo shared_file.txt no CONTAINER
+        shell: bash
+        run: |
+          #Exibir e carregar variáveis do arquivo shared_file.txt no CONTAINER
+          cat shared_file.txt
+          # Atribuir o conteúdo do arquivo à variável START_TIME
+          #START_TIME="$(<shared_file.txt)"
+          source shared_file.txt
+          # Definir a variável START_TIME para outros jobs
+          echo "START_TIME=$START_TIME"           >> $GITHUB_ENV
+          echo "START_TIMESTAMP=$START_TIMESTAMP" >> $GITHUB_ENV
+          echo "ISO_BRANCH=$ISO_BRANCH"           >> $GITHUB_ENV
+
+      - name: Checkout repository chililinux/build-iso-void
+        uses: actions/checkout@v4
+        with:
+          #fetch-depth: 0    # All commit history is downloaded
+          fetch-depth: 1 # Only the most recent commit of the branch will be downloaded
+
+      - name: Set up volume directory in CONTAINER
+        run: |
+          #Set up volume directory in CONTAINER
+          mkdir -p /mnt/lfs
+          ln -sf /mnt/lfs /lfs
+
+      - name: Install Required Packages and Libraries no CONTAINER
+        shell: bash
+        run: |
+          #Install Required Packages and Libraries in CONTAINER
+          #{
+          #echo 'repository=https://repo-fastly.voidlinux.org/current'
+          #echo 'repository=https://repo-fastly.voidlinux.org/current/nonfree'
+          #echo 'repository=https://repo-fastly.voidlinux.org/current/multilib'
+          #echo 'repository=https://repo-fastly.voidlinux.org/current/multilib/nonfree'
+          #echo 'repository=https://chililinux.com/void/current'
+          #} > /etc/xbps.d/00-repository-main.conf
+
+          xi -u --yes
+          xbps-install -Syu -ff \
+            xbps \
+            xtools \
+            bash \
+            sudo \
+            openssh \
+            tmate \
+            xz \
+            zip \
+            p7zip \
+            jq \
+            github-cli \
+            kmod \
+            ncurses \
+            which \
+            vpm \
+            libstdc++ \
+            nano \
+            curl \
+            git \
+            bash \
+            tree \
+            duf \
+            gettext \
+            rsync \
+            util-linux \
+            coreutils \
+            sed \
+            grep \
+            btrfs-progs \
+            e2fsprogs \
+            exfatprogs \
+            dosfstools \
+            xfsprogs
+          xbps-remove -oO --yes
+
+      - name: Create user builduser in CONTAINER
+        run: |
+          #Create user builduser in container
+          useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser || true
+          id builduser
+
+      - name: Set up aliases
+        run: |
+          cat << 'EOF' > $HOME/.bash_profile
+          #
+          # ~/.bash_profile
+          #
+
+          if command -v hostnamectl; then
+            hostnamectl
+          fi
+          timenow="$(date +'%H:%M')"
+          load="$(awk '{print $1 ", " $2 ", " $3}' /proc/loadavg)"
+
+          printf '\e[0;35m%s\n\e[0m' "$logo"
+          printf 'Welcome back! The time now is %s UTC\n' "$timenow"
+          printf 'Server load    :  %s\n' "$load"
+          printf 'Server Uptime  : %s\n' "$(uptime)"
+          printf 'User           :  %s %s\n' "$(whoami)" "$(id)"
+          printf '\n'
+
+          [[ -f ~/.bashrc ]] && . ~/.bashrc
+          EOF
+
+          echo "alias ll='ls -lah --color=auto'" >> $HOME/.bashrc
+          echo "alias gs='git status'"           >> $HOME/.bashrc
+          # Carrega o .bashrc para aplicar os aliases na sessão atual
+          source $HOME/.bashrc
+
+      - name: Initial Debug in CONTAINER
+        run: |
+          #Initial Debug
+          echo "Workflow started"
+          echo "Event Name: ${{ github.event_name }}"
+          echo "Event Action: ${{ github.event.action }}"
+          echo "Edition: ${{ github.event.client_payload.edition || inputs.edition }}"
+          echo "Tmate from payload: ${{ github.event.client_payload.tmate || inputs.tmate != false && inputs.tmate }}"
+          echo "Full github event: ${{ toJson(github.event) }}"
+
+      - name: Display the current user in CONTAINER
+        shell: bash
+        run: |
+          #Display the current user in CONTAINER
+          echo "#########################################"
+          echo "Current container is: $(hostname)"
+          echo "Current user is: $(whoami)"
+          echo "Current user ID is: $(id -u)"
+          echo "Current user details:"
+          id
+          echo "#########################################"
+          #df -hT
+          duf
+          echo "#########################################"
+          ls -lah --color=auto /mnt
+          echo "#########################################"
+          tree -d /mnt
+          echo "#########################################"
+
+      - name: Set release tag manually
+        id: date
+        run: |
+          # Set release tag manually
+          RELEASE_TAG="${iso_release_tag:-$(date '+%Y-%m-%d_%H-%M')}"
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
 
       - name: Setup SSH Agent
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+				env:
+					SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-          echo "SSH_AUTH_SOCK=/tmp/ssh_agent.sock" >> $GITHUB_ENV
+					ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+					ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+					echo "SSH_AUTH_SOCK=/tmp/ssh_agent.sock" >> $GITHUB_ENV
 
           # Add the repository directory as safe
       - name: Add safe directory
@@ -195,6 +436,7 @@ jobs:
           echo "manjaro_branch: $manjaro_branch"
 
       - name: Build and Publish Package
+        if: ${{ inputs.teste_input != true }}
         uses: ./
         with:
           # Parâmetros relacionados ao ambiente de build e tipo de pacote
@@ -208,10 +450,11 @@ jobs:
           repo: ${{ github.repository }}
 
           # Parâmetros relacionados ao debug e tmate
-          tmate: ${{ github.event.inputs.tmate || false }}
-
+          #tmate: ${{ github.event.inputs.tmate || false }}
+          tmate: "${{ env.DEBUG }}"
           # Tokens e chaves de segurança
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          #github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: "${{env.GITHUB_TOKEN}}"
           gpg_key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg_passphrase: ${{ secrets.PASSPHRASE }}
           telegram_token: ${{ secrets.TOKEN_BOT }}
@@ -236,3 +479,4 @@ jobs:
           start_timestamp: "${{ env.START_TIMESTAMP }}"
           repo_origem: "${{ github.event.client_payload.url }}"
           branch_fullname: "${{ github.event.client_payload.branch }}"
+
