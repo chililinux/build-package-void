@@ -306,7 +306,7 @@ jobs:
     container:
       #image: vcatafesta/voidlinux-docker:latest
       #image: vcatafesta/voidlinux-docker:1.1
-      image: vcatafesta/voidlinux-docker:1.4
+      image: vcatafesta/voidlinux-docker:1.1
       options: --privileged
       volumes:
         - /mnt/var_lib_manjaro_tools_buildiso:/var/lib/manjaro-tools/buildiso
