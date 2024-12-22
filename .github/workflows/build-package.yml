@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-##  build-package.yml
+#
+#  build-package.yml
 #  Created: 2024/09/15 - 08:10
-#  Altered: qua 20 nov 2024 10:00:22 -04
+#  Altered: 2024/11/19 - 01:10
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -26,7 +27,7 @@
 #  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 #  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##############################################################################
-name: 📦Build Packages VoidLinux
+name: 📦 Chililinux Build Packages
 
 # Gatilhos para o workflow
 on:
@@ -152,8 +153,8 @@ jobs:
         run: |
           #Enviar notificação para o Telegram
           started_by_user="${{ github.actor }}"
-					triggered_by_user="${{ github.triggering_actor }}"
-					repo_path="${{ secrets.PKGBUILD_DIR }}"
+          triggered_by_user="${{ github.triggering_actor }}"
+          repo_path="${{ secrets.PKGBUILD_DIR }}"
           link_action=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
 
           MESSAGE="⭐ <b>[step 1/6] build-package-void - INICIANDO WORKFLOW DE CRIAÇÃO DE PACOTE</b>
@@ -378,12 +379,12 @@ jobs:
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
 
       - name: Setup SSH Agent
-				env:
-					SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-					ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-					ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-					echo "SSH_AUTH_SOCK=/tmp/ssh_agent.sock" >> $GITHUB_ENV
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+          echo "SSH_AUTH_SOCK=/tmp/ssh_agent.sock" >> $GITHUB_ENV
 
           # Add the repository directory as safe
       - name: Add safe directory
@@ -479,4 +480,3 @@ jobs:
           start_timestamp: "${{ env.START_TIMESTAMP }}"
           repo_origem: "${{ github.event.client_payload.url }}"
           branch_fullname: "${{ github.event.client_payload.branch }}"
-
