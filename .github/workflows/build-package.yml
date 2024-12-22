@@ -91,7 +91,7 @@ env:
   TELEGRAM_TOKEN: "${{ secrets.TOKEN_BOT }}"
   #GITHUB_TOKEN: "${{ secrets.TOKEN_RELEASE }}"
   #GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-  GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  GITHUB_TOKEN: "${{ secrets.REPOSITORY_TOKEN }}"
   CHAT_ID: "${{ secrets.CHAT_ID }}"
   started_by_user: "${{ github.actor }}"
   triggered_by_user: "${{ github.triggering_actor }}"
