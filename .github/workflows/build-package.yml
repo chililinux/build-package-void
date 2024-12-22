@@ -208,6 +208,10 @@ jobs:
           #df -hT
           duf
           echo "#########################################"
+          echo 'ls -lah --color=auto'
+          ls -lah --color=auto
+          echo "#########################################"
+          echo 'ls -lah --color=auto /mnt'
           ls -lah --color=auto /mnt
           echo "#########################################"
 
