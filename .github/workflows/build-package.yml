@@ -392,6 +392,7 @@ jobs:
           xbps-remove -oO --yes
 
       - name: Initial Debug in CONTAINER
+        shell: bash
         run: |
           #Initial Debug
           source /tmp/send_telegram_message.sh
