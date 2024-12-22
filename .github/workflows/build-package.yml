@@ -311,10 +311,17 @@ jobs:
         - /mnt/var_cache_manjaro_tools_iso:/var/cache/manjaro-tools/iso
         - /mnt/lfs:/mnt/lfs
     steps:
+      - name: Create user builduser in CONTAINER
+        run: |
+          #Create user builduser in container
+          useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser || true
+          id builduser
+
       - name: Ajustar permissão
         run: |
           #Ajustar permissão
           sudo chmod 1777 /__w/
+          sudo chown builduser:builduser /__w/ -R
 
       - name: Download artifact shared-file
         uses: actions/download-artifact@v4
@@ -406,12 +413,6 @@ jobs:
             dosfstools \
             xfsprogs
           xbps-remove -oO --yes
-
-      - name: Create user builduser in CONTAINER
-        run: |
-          #Create user builduser in container
-          useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser || true
-          id builduser
 
       - name: Set up aliases
         run: |
