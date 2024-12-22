@@ -324,12 +324,6 @@ jobs:
           useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser || true
           id builduser
 
-      - name: Ajustar permissão
-        run: |
-          #Ajustar permissão
-          sudo chmod 1777 /home/runner/work/
-          sudo chown builduser:builduser /home/runner/work/ -R
-
       - name: Download artifact shared-file
         uses: actions/download-artifact@v4
         with:
