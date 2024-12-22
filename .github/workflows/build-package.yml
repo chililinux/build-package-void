@@ -321,7 +321,8 @@ jobs:
       - name: Ajustando algumas coisas
         run: |
           #Create user builduser in container
-          useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser || true
+          ln -sf /__w/build-package-void/build-package-void /work_dir
+          echo "WORK_DIR=/work_dir" >> $GITHUB_ENV
 
       - name: Create user builduser in CONTAINER
         run: |
