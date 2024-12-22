@@ -77,11 +77,19 @@ env:
   BRANCH_TYPE: "${{ github.event.client_payload.branch_type || github.event.inputs.branch_type }}"
   NEW_BRANCH: "${{ github.event.client_payload.branch || github.event.inputs.new_branch }}"
   PACKAGE_NAME: "${{ github.event.action }}"
-  TELEGRAM_TOKEN: "${{ secrets.TOKEN_BOT }}"
-  CHAT_ID: "${{ secrets.CHAT_ID }}"
   BRANCH_ORIGEM: "${{ github.ref_name }}"
   REPO_ORIGEM: "${{ github.event.client_payload.url }}"
   BRANCH_FULLNAME: "${{ github.event.client_payload.branch }}"
+  TELEGRAM_TOKEN: "${{ secrets.TOKEN_BOT }}"
+  CHAT_ID: "${{ secrets.CHAT_ID }}"
+  #GITHUB_TOKEN: "${{ secrets.TOKEN_RELEASE }}"
+  #GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  GITHUB_TOKEN: "${{ secrets.ORGANIZATION_TOKEN }}"
+  started_by_user: "${{ github.actor }}"
+  triggered_by_user: "${{ github.triggering_actor }}"
+  repo_path: "${{ secrets.PKGBUILD_DIR }}"
+  DEBUG: "${{ github.event.client_payload.tmate || inputs.tmate || false }}"
+  tmate: "${{ github.event.client_payload.tmate || inputs.tmate || false }}"
 
 jobs:
   setup:
