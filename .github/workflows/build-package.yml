@@ -200,8 +200,6 @@ jobs:
           echo "START_TIMESTAMP=$START_TIMESTAMP"   >> $GITHUB_ENV
           echo "START_TIME='$START_TIME'"           >> shared_file.txt
           echo "START_TIMESTAMP='$START_TIMESTAMP'" >> shared_file.txt
-          sudo chmod 644 shared_file.txt
-          sudo chmod 644 /tmp/send_telegram_message.sh
 
       - name: Install dependencies in HOST
         shell: bash
@@ -312,8 +310,12 @@ jobs:
         - /mnt/var_lib_manjaro_tools_buildiso:/var/lib/manjaro-tools/buildiso
         - /mnt/var_cache_manjaro_tools_iso:/var/cache/manjaro-tools/iso
         - /mnt/lfs:/mnt/lfs
-
     steps:
+      - name: Ajustar permissão
+        run: |
+          #Ajustar permissão
+          sudo chmod 1777 /__w/
+
       - name: Download artifact shared-file
         uses: actions/download-artifact@v4
         with:
