@@ -311,6 +311,13 @@ jobs:
         - /mnt/var_cache_manjaro_tools_iso:/var/cache/manjaro-tools/iso
         - /mnt/lfs:/mnt/lfs
     steps:
+      - name: Setup TMATE Session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ env.DEBUG == true }}
+        with:
+          install-dependencies: false
+          detached: true
+
       - name: Create user builduser in CONTAINER
         run: |
           #Create user builduser in container
