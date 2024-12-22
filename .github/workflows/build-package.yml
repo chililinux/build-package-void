@@ -318,17 +318,23 @@ jobs:
           install-dependencies: false
           detached: true
 
-      - name: Ajustando algumas coisas
-        run: |
-          #Create user builduser in container
-          ln -sf /__w/build-package-void/build-package-void /work_dir
-          echo "WORK_DIR=/work_dir" >> $GITHUB_ENV
-
       - name: Create user builduser in CONTAINER
         run: |
           #Create user builduser in container
           useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser || true
           id builduser
+
+      - name: Checkout repository chililinux/build-iso-void
+        uses: actions/checkout@v4
+        with:
+          #fetch-depth: 0    # All commit history is downloaded
+          fetch-depth: 1 # Only the most recent commit of the branch will be downloaded
+
+      - name: Ajustando algumas coisas
+        run: |
+          #Create user builduser in container
+          ln -sf /__w/build-package-void/build-package-void /work_dir
+          echo "WORK_DIR=/work_dir" >> $GITHUB_ENV
 
       - name: Download artifact shared-file
         uses: actions/download-artifact@v4
@@ -360,12 +366,6 @@ jobs:
           echo "START_TIMESTAMP=$START_TIMESTAMP" >> $GITHUB_ENV
           echo "ISO_BRANCH=$ISO_BRANCH"           >> $GITHUB_ENV
 
-      - name: Checkout repository chililinux/build-iso-void
-        uses: actions/checkout@v4
-        with:
-          #fetch-depth: 0    # All commit history is downloaded
-          fetch-depth: 1 # Only the most recent commit of the branch will be downloaded
-
       - name: Set up volume directory in CONTAINER
         run: |
           #Set up volume directory in CONTAINER
@@ -385,40 +385,10 @@ jobs:
           #} > /etc/xbps.d/00-repository-main.conf
 
           xi -u --yes
-          xbps-install -Syu -ff \
-            xbps \
-            xtools \
-            bash \
-            sudo \
-            openssh \
-            tmate \
-            xz \
-            zip \
-            p7zip \
-            jq \
-            github-cli \
-            kmod \
-            ncurses \
-            which \
-            vpm \
-            libstdc++ \
-            nano \
-            curl \
-            git \
-            bash \
-            tree \
-            duf \
-            gettext \
-            rsync \
-            util-linux \
-            coreutils \
-            sed \
-            grep \
-            btrfs-progs \
-            e2fsprogs \
-            exfatprogs \
-            dosfstools \
-            xfsprogs
+          #xbps-install -Syu -ff xbps xtools bash sudo openssh tmate \
+          #  xz zip p7zip jq github-cli kmod ncurses which vpm libstdc++ \
+          #  nano curl git bash tree duf gettext rsync util-linux coreutils \
+          #  sed grep btrfs-progs e2fsprogs exfatprogs dosfstools xfsprogs
           xbps-remove -oO --yes
 
       - name: Initial Debug in CONTAINER
