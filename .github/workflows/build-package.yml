@@ -208,10 +208,9 @@ jobs:
         shell: bash
         run: |
           #Install dependencies in HOST
-          #sudo apt-get update
-          #sudo apt-get autoremove
+          sudo apt-get update
+          sudo apt-get autoremove
           #sudo apt-get install -y inetutils-tools duf tree tmate
-          sudo apt-get install -y inetutils-tools duf tree
 
       #      - name: Setup TMATE Session in HOST
       #        uses: mxschmitt/action-tmate@v3
