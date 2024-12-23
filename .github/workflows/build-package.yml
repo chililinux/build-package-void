@@ -127,12 +127,12 @@ jobs:
           export TERM=${TERM:-xterm-256color}
 
           #Definindo variáveis de cores
-          export green="\033[01;32m"
           export red="\033[01;31m"
-          export blue="\033[01;34m"
-          export cyan="\033[01;36m"
-          export pink="\033[01;35m"
+          export green="\033[01;32m"
           export yellow="\033[01;33m"
+          export blue="\033[01;34m"
+          export pink="\033[01;35m"
+          export cyan="\033[01;36m"
           export reset="\033[0m"
           alias ls='ls -lha --color=auto'
           alias dir='ls -lha --color=auto'
@@ -145,7 +145,7 @@ jobs:
             #if [[ "$msg" == *:* ]]; then
               local before_colon="${msg%%:*}:"
               local after_colon="${msg#*: }"
-              msg="${cyan}${before_colon} ${yellow}${after_colon}${reset}"
+              msg="${cyan}${before_colon} ${pink}${after_colon}${reset}"
             #else
             #  msg="${cyan}${msg}${reset}"
             #fi
