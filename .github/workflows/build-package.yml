@@ -147,14 +147,12 @@ jobs:
               # Divide a string antes e depois do primeiro ':'
               local before_colon="${msg%%:*}:"
               local after_colon="${msg#*: }"
-
               # Aplica as cores
-              msg="${cyan}${before_colon} ${pink}${after_colon}${reset}"
+              msg="${cyan}${before_colon} ${red}${after_colon}${reset}"
             else
               # Se não houver ':', aplica apenas a cor padrão
               msg="${cyan}${msg}${reset}"
             fi
-
             echo -e "$msg"
           }
 
