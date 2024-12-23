@@ -142,13 +142,13 @@ jobs:
             msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
 
             # Adiciona a cor amarela após o primeiro ':'
-            if [[ "$msg" == *:* ]]; then
+            #if [[ "$msg" == *:* ]]; then
               local before_colon="${msg%%:*}:"
               local after_colon="${msg#*: }"
               msg="${cyan}${before_colon} ${yellow}${after_colon}${reset}"
-            else
-              msg="${cyan}${msg}${reset}"
-            fi
+            #else
+            #  msg="${cyan}${msg}${reset}"
+            #fi
             echo -e "$msg"
           }
 
