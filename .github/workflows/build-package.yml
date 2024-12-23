@@ -243,9 +243,17 @@ jobs:
         shell: bash
         run: |
           #Set up volume directory in HOST
+          source /tmp/send_telegram_message.sh
+          replicate '#'
+          msg_raw 'sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso'
+          msg_raw 'sudo mkdir -p /mnt/var_cache_manjaro_tools_iso'
+          msg_raw 'sudo mkdir -p /mnt/lfs'
           sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso
           sudo mkdir -p /mnt/var_cache_manjaro_tools_iso
           sudo mkdir -p /mnt/lfs
+          msg_raw 'tree -d /mnt'
+          tree -d /mnt
+          replicate '#'
 
       - name: Enviar notificação para o Telegram
         shell: bash
@@ -306,10 +314,10 @@ jobs:
           # Display the current user in host
           source /tmp/send_telegram_message.sh
           replicate '='
-          echo -e "${cyan}Current host is     : ${yellow}$(hostname)${reset}"
-          echo -e "${cyan}Current user is     : ${yellow}$(whoami)${reset}"
-          echo -e "${cyan}Current user ID is  : ${yellow}$(id -u)${reset}"
-          echo -e "${cyan}Current user details: ${yellow}$(id)${reset}"
+          msg_raw "${cyan}Current host is     : $(hostname)"
+          msg_raw "${cyan}Current user is     : $(whoami)"
+          msg_raw "${cyan}Current user ID is  : $(id -u)"
+          msg_raw "${cyan}Current user details: $(id)"
           replicate '='
           duf || true
           replicate '='
