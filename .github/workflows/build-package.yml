@@ -111,6 +111,10 @@ jobs:
       time: ${{ steps.time.outputs.time }} # Saída do job
       REPOSITORY_NAME: ${{ steps.get-repo-name.outputs.repo_name }}
     steps:
+      - name: Enable namespaces on host
+        run: |
+          echo 1 | sudo tee /proc/sys/kernel/unprivileged_userns_clone
+
       - name: Definir a função send_telegram_message no script temporário
         shell: bash
         env:
