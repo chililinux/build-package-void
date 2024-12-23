@@ -31,9 +31,9 @@ name: 📦 VoidLinux Build Packages
 
 # Gatilhos para o workflow
 on:
-  #  push:
-  #    branches:
-  #      - main
+  push:
+    branches:
+      - main
   repository_dispatch: # aguarda um evento externo para iniciar o workflow (útil para automações externas que acionam o GitHub Actions).
     types:
       - "*"
