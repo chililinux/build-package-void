@@ -271,11 +271,11 @@ jobs:
           msg_run 'sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso'
           msg_run 'sudo mkdir -p /mnt/var_cache_manjaro_tools_iso'
           msg_run 'sudo mkdir -p /mnt/lfs'
-          sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso
-          sudo mkdir -p /mnt/var_cache_manjaro_tools_iso
-          sudo mkdir -p /mnt/lfs
+          #sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso
+          #sudo mkdir -p /mnt/var_cache_manjaro_tools_iso
+          #sudo mkdir -p /mnt/lfs
           msg_run 'tree -d /mnt'
-          tree -d /mnt || true
+          #tree -d /mnt || true
           replicate '#'
 
       - name: Enviar notificação para o Telegram
