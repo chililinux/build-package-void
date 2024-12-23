@@ -393,18 +393,18 @@ jobs:
         run: |
           #Exibir e carregar variáveis do arquivo shared_file.txt no CONTAINER
           source /tmp/send_telegram_message.sh
+          replicate '#'
           msg_run 'cat shared_file.txt' || true
+          replicate '#'
 
           # Atribuir o conteúdo do arquivo à variável START_TIME
           #START_TIME="$(<shared_file.txt)"
           msg_run 'source shared_file.txt' || true
-
           # Definir a variável START_TIME para outros jobs
           echo "START_TIME=$START_TIME"                       >> $GITHUB_ENV
           echo "START_TIMESTAMP=$START_TIMESTAMP"             >> $GITHUB_ENV
           echo "ISO_BRANCH=$ISO_BRANCH"                       >> $GITHUB_ENV
           echo "SHORT_REPOSITORY_NAME=$SHORT_REPOSITORY_NAME" >> $GITHUB_ENV
-          replicate '#'
           msg_raw "START_TIME           : $START_TIME"
           msg_raw "START_TIMESTAMP      : $START_TIMESTAMP"
           msg_raw "ISO_BRANCH           : $ISO_BRANCH"
@@ -418,6 +418,37 @@ jobs:
           source /tmp/send_telegram_message.sh
           msg_run 'useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser' || true
           msg_run 'id builduser' || true
+
+      - name: Display the current user in CONTAINER
+        shell: bash
+        run: |
+          #Display the current user in CONTAINER
+          source /tmp/send_telegram_message.sh
+          replicate '#'
+          msg_raw "Current container is: $(hostname)"
+          msg_raw "Current user is     : $(whoami)"
+          msg_raw "Current user ID is  : $(id -u)"
+          msg_raw "Current user details: $(id)"
+          replicate '#'
+          msg_run 'duf' || true
+          replicate '#'
+          msg_run 'tree -d /mnt' || true
+          replicate '#'
+          msg_run 'ls -lah --color=auto /' || true
+          replicate '#'
+
+      - name: Initial Debug in CONTAINER
+        shell: bash
+        run: |
+          #Initial Debug
+          source /tmp/send_telegram_message.sh
+          replicate '='
+          msg_raw "Event Name        : ${{ github.event_name }}"
+          msg_raw "Event Action      : ${{ github.event.action }}"
+          msg_raw "Edition           : ${{ github.event.client_payload.edition || inputs.edition }}"
+          msg_raw "DEBUG             : ${{ env.DEBUG }}"
+          msg_raw "Tmate             : ${{ env.tmate }}"
+          replicate '='
 
       - name: Checkout repository chililinux/build-iso-void
         uses: actions/checkout@v4
@@ -483,37 +514,6 @@ jobs:
           #  nano curl git bash tree duf gettext rsync util-linux coreutils \
           #  sed grep btrfs-progs e2fsprogs exfatprogs dosfstools xfsprogs
           msg_run 'xbps-remove -oO --yes' || true
-          replicate '#'
-
-      - name: Initial Debug in CONTAINER
-        shell: bash
-        run: |
-          #Initial Debug
-          source /tmp/send_telegram_message.sh
-          replicate '='
-          msg_raw "Event Name        : ${{ github.event_name }}"
-          msg_raw "Event Action      : ${{ github.event.action }}"
-          msg_raw "Edition           : ${{ github.event.client_payload.edition || inputs.edition }}"
-          msg_raw "DEBUG             : ${{ env.DEBUG }}"
-          msg_raw "Tmate             : ${{ env.tmate }}"
-          replicate '='
-
-      - name: Display the current user in CONTAINER
-        shell: bash
-        run: |
-          #Display the current user in CONTAINER
-          source /tmp/send_telegram_message.sh
-          replicate '#'
-          msg_raw "Current container is: $(hostname)"
-          msg_raw "Current user is     : $(whoami)"
-          msg_raw "Current user ID is  : $(id -u)"
-          msg_raw "Current user details: $(id)"
-          replicate '#'
-          msg_run 'duf' || true
-          replicate '#'
-          msg_run 'tree -d /mnt' || true
-          replicate '#'
-          msg_run 'ls -lah --color=auto /' || true
           replicate '#'
 
       - name: Set release tag manually
