@@ -182,6 +182,16 @@ jobs:
           export -f send_telegram_message
           EOF
 
+      - name: Print repository name
+        shell: bash
+        run: |
+          echo "Repository: $GITHUB_REPOSITORY"
+
+      - name: Get repository name
+        shell: bash
+        run: |
+          echo "${GITHUB_REPOSITORY##*/}"
+
       - name: Obter a hora atual
         id: time
         run: |
@@ -330,9 +340,9 @@ jobs:
           #fetch-depth: 0    # All commit history is downloaded
           fetch-depth: 1 # Only the most recent commit of the branch will be downloaded
 
-      - name: Ajustando algumas coisas
+      - name: Ajustando work_dir
         run: |
-          #Create user builduser in container
+          #Ajustando work_dir
           ln -sf /__w/build-package-void/build-package-void /work_dir
           echo "WORK_DIR=/work_dir" >> $GITHUB_ENV
 
@@ -412,16 +422,17 @@ jobs:
           source /tmp/send_telegram_message.sh
           replicate '#'
           msg_raw "Current container is: $(hostname)"
-          msg_raw "Current user is: $(whoami)"
-          msg_raw "Current user ID is: $(id -u)"
-          msg_raw "Current user details:"
-          id
+          msg_raw "Current user is     : $(whoami)"
+          msg_raw "Current user ID is  : $(id -u)"
+          msg_raw "Current user details: $(id)"
           replicate '#'
           duf || true
           replicate '#'
-          ls -lah --color=auto /mnt
-          replicate '#'
+          msg_raw 'tree -d /mnt'
           tree -d /mnt
+          replicate '#'
+          msg_raw 'tree -d /'
+          tree -d /
           replicate '#'
 
       - name: Set release tag manually
@@ -435,12 +446,16 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-          echo "SSH_AUTH_SOCK=/tmp/ssh_agent.sock" >> $GITHUB_ENV
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}" || true
+          echo "SSH_AUTH_SOCK=/tmp/ssh_agent.sock" >> $GITHUB_ENV || true
 
-          # Add the repository directory as safe
       - name: Add safe directory
-        run: git config --global --add safe.directory /__w/build-package-void/build-package-void
+        run: |
+          # Add safe directory
+          git config \
+            --global \
+            --add safe.directory \
+            /__w/build-package-void/build-package-void
 
       # Set environment variables
       - name: Set ENVs
