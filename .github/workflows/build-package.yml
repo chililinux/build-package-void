@@ -169,6 +169,7 @@ jobs:
             local msg="$1"
             msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
             echo -e "BIV=>${cyan}running: ${yellow}${msg}${reset}"
+            eval "$msg"
           }
           export -f msg_run
 
@@ -502,7 +503,7 @@ jobs:
           msg_raw "Event Action      : ${{ github.event.action }}"
           msg_raw "Edition           : ${{ github.event.client_payload.edition || inputs.edition }}"
           msg_raw "Tmate             : ${{ github.event.client_payload.tmate || inputs.tmate }}"
-          msg_raw "Full github event : ${{ toJson(github.event) }}"
+          msg     "Full github event : ${{ toJson(github.event) }}"
           replicate '='
 
       - name: Display the current user in CONTAINER
