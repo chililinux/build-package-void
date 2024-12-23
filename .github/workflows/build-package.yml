@@ -250,10 +250,10 @@ jobs:
           #Install dependencies in HOST
           source /tmp/send_telegram_message.sh
           replicate '#'
-          sudo apt-get update
-          sudo apt-get autoremove
-          #sudo apt-get install -y inetutils-tools duf tree tmate
-          sudo apt-get install -y inetutils-tools duf tree
+          msg_run 'sudo apt-get update'
+          msg_run 'sudo apt-get autoremove'
+          #msg_run 'sudo apt-get install -y inetutils-tools duf tree tmate'
+          msg_run 'sudo apt-get install -y inetutils-tools duf tree'
           replicate '#'
 
       #      - name: Setup TMATE Session in HOST
@@ -271,11 +271,7 @@ jobs:
           msg_run 'sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso' || true
           msg_run 'sudo mkdir -p /mnt/var_cache_manjaro_tools_iso' || true
           msg_run 'sudo mkdir -p /mnt/lfs' || true
-          #sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso
-          #sudo mkdir -p /mnt/var_cache_manjaro_tools_iso
-          #sudo mkdir -p /mnt/lfs
           msg_run 'tree -d /mnt' || true
-          #tree -d /mnt || true
           replicate '#'
 
       - name: Enviar notificação para o Telegram
@@ -342,11 +338,9 @@ jobs:
           msg_raw "Current user ID is  : $(id -u)"
           msg_raw "Current user details: $(id)"
           replicate '='
-          msg_run 'duf || true'
-          duf || true
+          msg_run 'duf' || true
           replicate '='
-          msg_run 'ls -lha --color=auto /mnt || true'
-          ls -lha --color=auto /mnt || true
+          msg_run 'ls -lha --color=auto /mnt' || true
           replicate '='
 
   build:
@@ -395,13 +389,11 @@ jobs:
         run: |
           #Exibir e carregar variáveis do arquivo shared_file.txt no CONTAINER
           source /tmp/send_telegram_message.sh
-          msg_run 'cat shared_file.txt'
-          cat shared_file.txt
+          msg_run 'cat shared_file.txt' || true
 
           # Atribuir o conteúdo do arquivo à variável START_TIME
           #START_TIME="$(<shared_file.txt)"
-          msg_run 'source shared_file.txt'
-          source shared_file.txt
+          msg_run 'source shared_file.txt' || true
 
           # Definir a variável START_TIME para outros jobs
           echo "START_TIME=$START_TIME"                       >> $GITHUB_ENV
@@ -420,10 +412,8 @@ jobs:
         run: |
           #Create user builduser in container
           source /tmp/send_telegram_message.sh
-          msg_run 'useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser || true'
-          useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser || true
-          msg_run 'id builduser'
-          id builduser
+          msg_run 'useradd -m -G wheel,audio,video,cdrom,optical,kvm,xbuilder builduser' || true
+          msg_run 'id builduser' || true
 
       - name: Checkout repository chililinux/build-iso-void
         uses: actions/checkout@v4
@@ -457,8 +447,7 @@ jobs:
         run: |
           #Ajustando work_dir
           source /tmp/send_telegram_message.sh
-          msg_run 'ln -sf /__w/${{env.SHORT_REPOSITORY_NAME}}/${{env.SHORT_REPOSITORY_NAME}} /work_dir'
-          ln -sf /__w/${{env.SHORT_REPOSITORY_NAME}}/${{env.SHORT_REPOSITORY_NAME}} /work_dir
+          msg_run "ln -sf /__w/${{env.SHORT_REPOSITORY_NAME}}/${{env.SHORT_REPOSITORY_NAME}} /work_dir" || true
           echo "WORK_DIR=/work_dir" >> $GITHUB_ENV
 
       - name: Set up volume directory in CONTAINER
@@ -466,10 +455,8 @@ jobs:
         run: |
           #Set up volume directory in CONTAINER
           source /tmp/send_telegram_message.sh
-          msg_run 'mkdir -p /mnt/lfs'
-          mkdir -p /mnt/lfs
-          msg_run 'ln -sf /mnt/lfs /lfs'
-          ln -sf /mnt/lfs /lfs
+          msg_run 'mkdir -p /mnt/lfs' || true
+          msg_run 'ln -sf /mnt/lfs /lfs' || true
 
       - name: Install Required Packages and Libraries no CONTAINER
         shell: bash
@@ -484,14 +471,15 @@ jobs:
           #echo 'repository=https://chililinux.com/void/current'
           #} > /etc/xbps.d/00-repository-main.conf
 
-          msg_run 'xi -u --yes'
-          xi -u --yes
+          replicate '#'
+          msg_run 'xi -u --yes' || true
+          replicate '#'
           #xbps-install -Syu -ff xbps xtools bash sudo openssh tmate \
           #  xz zip p7zip jq github-cli kmod ncurses which vpm libstdc++ \
           #  nano curl git bash tree duf gettext rsync util-linux coreutils \
           #  sed grep btrfs-progs e2fsprogs exfatprogs dosfstools xfsprogs
-          msg_run 'xbps-remove -oO --yes'
-          xbps-remove -oO --yes
+          msg_run 'xbps-remove -oO --yes' || true
+          replicate '#'
 
       - name: Initial Debug in CONTAINER
         shell: bash
@@ -517,13 +505,11 @@ jobs:
           msg_raw "Current user ID is  : $(id -u)"
           msg_raw "Current user details: $(id)"
           replicate '#'
-          duf || true
+          msg_run 'duf' || true
           replicate '#'
-          msg_raw 'tree -d /mnt'
-          tree -d /mnt
+          msg_run 'tree -d /mnt' || true
           replicate '#'
-          msg_raw 'ls -lah --color=auto /'
-          ls -lah --color=auto /
+          msg_run 'ls -lah --color=auto /' || true
           replicate '#'
 
       - name: Set release tag manually
@@ -536,13 +522,17 @@ jobs:
         shell: bash
         run: |
           # Mark repository as safe
-          git config --global --add safe.directory /__w/${{ env.SHORT_REPOSITORY_NAME }}/${{ env.SHORT_REPOSITORY_NAME }}
+          source /tmp/send_telegram_message.sh
+          replicate '#'
+          msg_run "git config --global --add safe.directory /__w/${{ env.SHORT_REPOSITORY_NAME }}/${{ env.SHORT_REPOSITORY_NAME }}" || true
+          replicate '#'
 
       # Set environment variables
       - name: Set ENVs
         shell: bash
         run: |
           # Set URL and git branch
+          source /tmp/send_telegram_message.sh
           if [ -n "${{ github.event.client_payload.url }}" ]; then
             echo "url=${{ github.event.client_payload.url }}" >> $GITHUB_ENV
           fi
@@ -568,13 +558,15 @@ jobs:
         shell: bash
         run: |
           #Fetch all branches
-          git fetch --all
-          git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+          source /tmp/send_telegram_message.sh
+          msg_run 'git fetch --all' || true
+          msg_run "git fetch origin '+refs/heads/*:refs/remotes/origin/*'" || true
 
       - name: Checkout to specified branch or create if not exists
         shell: bash
         run: |
           #Checkout to specified branch or create if not exists
+          source /tmp/send_telegram_message.sh
           if git ls-remote --exit-code --heads origin ${{ env.NEW_BRANCH }}; then
             git checkout ${{ env.NEW_BRANCH }}
           else
