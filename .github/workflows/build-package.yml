@@ -139,16 +139,22 @@ jobs:
 
           msg_raw() {
             local msg="$1"
-            msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
+            # Remove tags HTML, se existirem
+            msg="$(sed 's/<[^>]*>//g' <<< "$msg")"
 
-            # Adiciona a cor amarela após o primeiro ':'
-            #if [[ "$msg" == *:* ]]; then
+            # Verifica se existe ':' na mensagem
+            if [[ "$msg" == *:* ]]; then
+              # Divide a string antes e depois do primeiro ':'
               local before_colon="${msg%%:*}:"
               local after_colon="${msg#*: }"
+
+              # Aplica as cores
               msg="${cyan}${before_colon} ${pink}${after_colon}${reset}"
-            #else
-            #  msg="${cyan}${msg}${reset}"
-            #fi
+            else
+              # Se não houver ':', aplica apenas a cor padrão
+              msg="${cyan}${msg}${reset}"
+            fi
+
             echo -e "$msg"
           }
 
