@@ -105,7 +105,7 @@ env:
   ACTIONS_RUNNER_DEBUG: true
   FULL_REPOSITORY_NAME: "${{ github.repository }}"
   REPO_NAME: "${{ github.repository }}"
-  full_github_event: "${{ toJson(github.event) }}"
+  full_github_event: ${{ toJson(github.event) }}
 
 jobs:
   setup:
