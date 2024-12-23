@@ -2,7 +2,7 @@
 #
 #  build-package.yml
 #  Created: 2024/09/15 - 08:10
-#  Altered: dom 22 dez 2024 20:15:58 -04
+#  Altered: seg 23 dez 2024 14:37:29 -04
 #
 #  Copyright (c) 2024-2024, Vilmar Catafesta <vcatafesta@gmail.com>
 #  All rights reserved.
@@ -100,8 +100,8 @@ env:
   tmate: "${{ github.event.client_payload.tmate || inputs.tmate }}"
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
-  FULL_REPOSITORY_NAME: "${GITHUB_REPOSITORY}"
-  SHORT_REPOSITORY_NAME: "${GITHUB_REPOSITORY##*/}"
+  FULL_REPOSITORY_NAME: "${{ github.repository }}"
+  SHORT_REPOSITORY_NAME: "${{ github.repository##*/ }}"
   REPO_NAME: "${{ github.repository }}"
 
 jobs:
@@ -264,10 +264,10 @@ jobs:
           repo_path="${{ secrets.PKGBUILD_DIR }}"
           link_action=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
 
-          MESSAGE="⭐ <b>[step 1/6] {{env.SHORT_REPOSITORY_NAME}} - INICIANDO WORKFLOW DE CRIAÇÃO DE PACOTE</b>
+          MESSAGE="⭐ <b>[step 1/6] ${{env.SHORT_REPOSITORY_NAME}} - INICIANDO WORKFLOW DE CRIAÇÃO DE PACOTE</b>
           <b>Job:</b> <code>#${GITHUB_RUN_NUMBER}</code>
           <b>Job URL:</b> <a href='https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}'>${link_action}</a>
-          <b>Workflow:</b> <code>{{env.SHORT_REPOSITORY_NAME}}/build-package.yml</code>
+          <b>Workflow:</b> <code>${{env.SHORT_REPOSITORY_NAME}}/build-package.yml</code>
           <b>Iniciado/Triggered:</b> <code>${started_by_user}/${triggered_by_user}</code>
           <b>Inicio:</b> <code>${{ env.START_TIME }}</code>
           <b>Nome:</b> <code>${{ env.PACKAGE_NAME }}</code>
@@ -383,7 +383,7 @@ jobs:
       - name: Ajustando work_dir
         run: |
           #Ajustando work_dir
-          ln -sf /__w/{{env.SHORT_REPOSITORY_NAME}}/{{env.SHORT_REPOSITORY_NAME}} /work_dir
+          ln -sf /__w/${{env.SHORT_REPOSITORY_NAME}}/${{env.SHORT_REPOSITORY_NAME}} /work_dir
           echo "WORK_DIR=/work_dir" >> $GITHUB_ENV
 
       - name: Download artifact shared-file
