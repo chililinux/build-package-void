@@ -164,12 +164,6 @@ jobs:
             echo -e "BIV=>${cyan}running: ${yellow}${msg}${reset}"
           }
 
-          msg_raw() {
-            local msg="$1"
-            msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
-            echo -e "${cyan}${msg}${reset}"
-          }
-
           msg_info() {
             local msg="$1"
             msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
