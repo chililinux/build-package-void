@@ -206,17 +206,19 @@ jobs:
 
       - name: Obter a hora atual
         id: time
+        shell: bash
         run: |
           #Obter a hora atual
           #echo "::set-output name=time::$(date +'%Y.%m.%d-%H%M')"
           echo "time=$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_OUTPUT
 
-      - name: Capturar hora de início do workflow
+      - name: Capturar hora de início do workflow e/ou outras variáveis
         id: start-time
         shell: bash
         run: |
+          #Capturar hora de início do workflow e/ou outras variáveis
           START_TIME=$(date +"%Y-%m-%d %H:%M:%S")  # Hora completa
-          START_TIMESTAMP=$(date +%s)  # Timestamp em segundos
+          START_TIMESTAMP=$(date +%s)              # Timestamp em segundos
           echo "Início do Workflow: $START_TIME"
           echo "START_TIME=$START_TIME"             >> $GITHUB_ENV
           echo "START_TIME='$START_TIME'"           >> shared_file.txt
@@ -229,10 +231,13 @@ jobs:
         shell: bash
         run: |
           #Install dependencies in HOST
+          source /tmp/send_telegram_message.sh
+          replicate '#'
           sudo apt-get update
           sudo apt-get autoremove
           #sudo apt-get install -y inetutils-tools duf tree tmate
           sudo apt-get install -y inetutils-tools duf tree
+          replicate '#'
 
       #      - name: Setup TMATE Session in HOST
       #        uses: mxschmitt/action-tmate@v3
@@ -246,13 +251,13 @@ jobs:
           #Set up volume directory in HOST
           source /tmp/send_telegram_message.sh
           replicate '#'
-          msg_raw 'sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso'
-          msg_raw 'sudo mkdir -p /mnt/var_cache_manjaro_tools_iso'
-          msg_raw 'sudo mkdir -p /mnt/lfs'
+          msg_info 'sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso'
+          msg_info 'sudo mkdir -p /mnt/var_cache_manjaro_tools_iso'
+          msg_info 'sudo mkdir -p /mnt/lfs'
           sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso
           sudo mkdir -p /mnt/var_cache_manjaro_tools_iso
           sudo mkdir -p /mnt/lfs
-          msg_raw 'tree -d /mnt'
+          msg_info 'tree -d /mnt'
           tree -d /mnt || true
           replicate '#'
 
