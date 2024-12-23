@@ -337,16 +337,25 @@ jobs:
         with:
           #fetch-depth: 0    # All commit history is downloaded
           fetch-depth: 1 # Only the most recent commit of the branch will be downloaded
-
       - name: Sync UID/GID
         run: |
           USER_ID=$(id -u)
           GROUP_ID=$(id -g)
-          groupadd -g "$GROUP_ID" hostgroup
-          useradd -u "$USER_ID" -g hostgroup hostuser
-          chown -R hostuser:hostgroup /mnt/var_lib_manjaro_tools_buildiso \
-                                      /mnt/var_cache_manjaro_tools_iso \
-                                      /mnt/lfs
+
+          if [ "$GROUP_ID" -ne 0 ]; then
+            groupadd -g "$GROUP_ID" hostgroup
+          else
+            echo "Skipping groupadd: GID 0 is already assigned to root"
+          fi
+
+          if [ "$USER_ID" -ne 0 ]; then
+            useradd -u "$USER_ID" -g "${GROUP_ID:-root}" hostuser
+            chown -R hostuser:${GROUP_ID:-root} /mnt/var_lib_manjaro_tools_buildiso \
+                                                 /mnt/var_cache_manjaro_tools_iso \
+                                                 /mnt/lfs
+          else
+            echo "Skipping useradd: UID 0 is already assigned to root"
+          fi
 
       - name: Ajustando work_dir
         run: |
