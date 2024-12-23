@@ -146,7 +146,7 @@ jobs:
             if [[ "$msg" == *:* ]]; then
               local before_colon="${msg%%:*}:"
               local after_colon="${msg#*: }"
-              msg="${cyan}${before_colon}${yellow}${after_colon}${reset}"
+              msg="${cyan}${before_colon} ${yellow}${after_colon}${reset}"
             else
               msg="${cyan}${msg}${reset}"
             fi
@@ -314,10 +314,10 @@ jobs:
           # Display the current user in host
           source /tmp/send_telegram_message.sh
           replicate '='
-          msg_raw "${cyan}Current host is     : $(hostname)"
-          msg_raw "${cyan}Current user is     : $(whoami)"
-          msg_raw "${cyan}Current user ID is  : $(id -u)"
-          msg_raw "${cyan}Current user details: $(id)"
+          msg_raw "Current host is     : $(hostname)"
+          msg_raw "Current user is     : $(whoami)"
+          msg_raw "Current user ID is  : $(id -u)"
+          msg_raw "Current user details: $(id)"
           replicate '='
           duf || true
           replicate '='
