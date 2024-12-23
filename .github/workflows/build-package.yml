@@ -100,8 +100,9 @@ env:
   tmate: "${{ github.event.client_payload.tmate || inputs.tmate }}"
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
-  FULL_REPOSITORY_NAME: "${GITHUB_REPOSITORY}"
-  SHORT_REPOSITORY_NAME: "${GITHUB_REPOSITORY##*/}"
+  FULL_REPOSITORY_NAME: "${{ github.repository }}"
+  SHORT_REPOSITORY_NAME: "${{ github.repository##*/ }}"
+  REPO_NAME: "${{ github.repository }}"
 
 jobs:
   setup:
@@ -433,13 +434,11 @@ jobs:
           # Set release tag manually
           echo "RELEASE_TAG=$(date '+%Y-%m-%d_%H-%M')" >> "$GITHUB_ENV"
 
-      - name: Add safe directory
+      - name: Mark repository as safe
+        shell: bash
         run: |
-          # Add safe directory
-          git config \
-            --global \
-            --add safe.directory \
-            /__w/{{env.SHORT_REPOSITORY_NAME}}/{{env.SHORT_REPOSITORY_NAME}}
+          # Mark repository as safe
+          git config --global --add safe.directory /__w/${{ env.SHORT_REPOSITORY_NAME }}/${{ env.SHORT_REPOSITORY_NAME }}
 
       # Set environment variables
       - name: Set ENVs
