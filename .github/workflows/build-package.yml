@@ -105,7 +105,7 @@ env:
   ACTIONS_RUNNER_DEBUG: true
   FULL_REPOSITORY_NAME: "${{ github.repository }}"
   REPO_NAME: "${{ github.repository }}"
-  full_github_event: ${{ toJson(github.event) }}
+  #full_github_event: ${{ toJson(github.event) }}
 
 jobs:
   setup:
@@ -531,31 +531,18 @@ jobs:
           msg_run "git config --global --add safe.directory /__w/${{ env.SHORT_REPOSITORY_NAME }}/${{ env.SHORT_REPOSITORY_NAME }}" || true
           replicate '#'
 
-      # Set environment variables
-      - name: Set ENVs
+      - name: Set environment variables
         shell: bash
         run: |
-          # Set URL and git branch
+          #Set environment variables
           source /tmp/send_telegram_message.sh
           if [ -n "${{ github.event.client_payload.url }}" ]; then
             echo "url=${{ github.event.client_payload.url }}" >> $GITHUB_ENV
+          else
+            echo "url=<none>" >> $GITHUB_ENV
           fi
           if [ -n "${{ github.event.client_payload.branch }}" ]; then
             echo "git_branch=${{ github.event.client_payload.branch }}" >> $GITHUB_ENV
-          fi
-
-          # Set Manjaro branch, default to stable if not specified
-          if [ -z "${{ github.event.client_payload.manjaro_branch }}" ]; then
-            echo "manjaro_branch=stable" >> $GITHUB_ENV
-          else
-            echo "manjaro_branch=${{ github.event.client_payload.manjaro_branch }}" >> $GITHUB_ENV
-          fi
-
-          # Set Community branch, default to testing if not specified
-          if [ -z "${{ github.event.client_payload.community_branch }}" ]; then
-            echo "community_branch=testing" >> $GITHUB_ENV
-          else
-            echo "community_branch=${{ github.event.client_payload.community_branch }}" >> $GITHUB_ENV
           fi
 
       - name: Fetch all branches
