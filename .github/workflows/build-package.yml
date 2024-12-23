@@ -268,13 +268,13 @@ jobs:
           #Set up volume directory in HOST
           source /tmp/send_telegram_message.sh
           replicate '#'
-          msg_run 'sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso'
-          msg_run 'sudo mkdir -p /mnt/var_cache_manjaro_tools_iso'
-          msg_run 'sudo mkdir -p /mnt/lfs'
+          msg_run 'sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso' || true
+          msg_run 'sudo mkdir -p /mnt/var_cache_manjaro_tools_iso' || true
+          msg_run 'sudo mkdir -p /mnt/lfs' || true
           #sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso
           #sudo mkdir -p /mnt/var_cache_manjaro_tools_iso
           #sudo mkdir -p /mnt/lfs
-          msg_run 'tree -d /mnt'
+          msg_run 'tree -d /mnt' || true
           #tree -d /mnt || true
           replicate '#'
 
