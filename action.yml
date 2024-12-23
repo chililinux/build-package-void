@@ -215,155 +215,12 @@ runs:
         msg "$(env | sort)"
         replicate '='
 
-    - name: Import GPG key
-      shell: bash
-      run: |
-        # Import GPG key
-        source /tmp/send_telegram_message.sh
-        replicate '='
-        if gpg --batch --import <<< "${{ inputs.gpg_key }}"; then
-          echo -e "\033[01;32m=>Importação da chave GPG foi bem-sucedida. ${RESET}"
-        else
-          echo -e "\033[01;31m=>Erro na importação da chave GPG. ${RESET}"
-          exit 1
-        fi
-        replicate '='
-
-    - name: Configure System and Repositories
-      shell: bash
-      run: |
-        #Configure System and Repositories
-        source /tmp/send_telegram_message.sh
-        replicate '#'
-        #Set up pacman mirror
-        msg "Usando mirror especificado: ${{ inputs.pacman_mirror }}"
-        echo 'Server = ${{ inputs.pacman_mirror }}' | sudo tee -a /etc/pacman.d/mirrorlist
-        echo 'Server = https://linorg.usp.br/manjaro/testing/$repo/$arch' | sudo tee -a /etc/pacman.d/mirrorlist
-        echo 'Server = https://manjaro.c3sl.ufpr.br/testing/$repo/$arch' | sudo tee -a /etc/pacman.d/mirrorlist
-
-        #Exibe /etc/pacman.d/mirrorlist
-        replicate '-'
-        echo 'cat /etc/pacman.d/mirrorlist'
-        cat /etc/pacman.d/mirrorlist
-        replicate '-'
-
-        # Remove existing BigLinux repositories
-        sudo sed -i '/biglinux/,$d' /etc/pacman.conf
-
-        # Add appropriate repositories based on build environment
-        if [ "${{ inputs.build_env }}" == "testing" ] || [ "$BRANCH_TYPE" == "testing" ]; then
-          echo '
-          [chili-testing]
-          #SigLevel = Optional TrustAll
-          SigLevel = PackageRequired
-          Server = https://repo.chililinux.com/testing/$arch
-
-          [chili-stable]
-          #SigLevel = Optional TrustAll
-          SigLevel = PackageRequired
-          Server = https://repo.chililinux.com/stable/$arch
-
-          [community-testing]
-          SigLevel = PackageRequired
-          Server = https://repo.communitybig.org/testing/$arch
-
-          [community-stable]
-          SigLevel = PackageRequired
-          Server = https://repo.communitybig.org/stable/$arch
-
-          [community-extra]
-          SigLevel = PackageRequired
-          Server = https://repo.communitybig.org/extra/$arch
-
-          [biglinux-testing]
-          SigLevel = PackageRequired
-          Server = https://repo.biglinux.com.br/testing/$arch
-
-          [biglinux-stable]
-          SigLevel = PackageRequired
-          Server = https://repo.biglinux.com.br/stable/$arch' | sudo tee -a /etc/pacman.conf /etc/chrootbuild/pacman.conf.x86_64
-        elif [ "${{ inputs.build_env }}" == "extra" ] || [ "$BRANCH_TYPE" == "extra" ]; then
-          echo '
-          [chili-extra]
-          #SigLevel = Optional TrustAll
-          SigLevel = PackageRequired
-          Server = https://repo.chililinux.com/extra/$arch
-
-          [community-extra]
-          SigLevel = PackageRequired
-          Server = https://repo.communitybig.org/extra/$arch' | sudo tee -a /etc/pacman.conf /etc/chrootbuild/pacman.conf.x86_64
-        elif [ "${{ inputs.build_env }}" == "stable" ] || [ "$BRANCH_TYPE" == "stable" ]; then
-          echo '
-          [chili-stable]
-          #SigLevel = Optional TrustAll
-          SigLevel = PackageRequired
-          Server = https://repo.chililinux.com/stable/$arch
-
-          [chili-extra]
-          #SigLevel = Optional TrustAll
-          SigLevel = PackageRequired
-          Server = https://repo.chililinux.com/extra/$arch
-
-          [community-stable]
-          SigLevel = PackageRequired
-          Server = https://repo.communitybig.org/stable/$arch
-
-          [community-extra]
-          SigLevel = PackageRequired
-          Server = https://repo.communitybig.org/extra/$arch
-
-          [biglinux-stable]
-          SigLevel = PackageRequired
-          Server = https://repo.biglinux.com.br/stable/$arch' | sudo tee -a /etc/pacman.conf /etc/chrootbuild/pacman.conf.x86_64
-        elif [ "${{ inputs.build_env }}" == "aur" ] || [ "${{ inputs.branch_type }}" == "aur" ]; then
-          echo "Configurando para pacote AUR: ${{ inputs.package_name }}"
-          # Configurações específicas para AUR
-          sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
-          sudo sed -i 's/^#BUILDDIR/BUILDDIR/' /etc/makepkg.conf
-          sudo sed -i 's/^#PKGDEST/PKGDEST/' /etc/makepkg.conf
-
-          # Habilitar o repositório multilib (necessário para alguns pacotes AUR)
-          sudo sed -i '/\[multilib\]/,/Include/s/^#//' /etc/pacman.conf
-
-          # Atualizar os repositórios após as mudanças
-          sudo pacman -Sy
-
-          # Instalar dependências comumente necessárias para builds AUR
-          sudo pacman -S --needed base-devel git --noconfirm
-        else
-          echo "Invalid branch type specified: ${{ inputs.branch_type }}"
-          exit 1
-        fi
-
-        # Configure makepkg
-        sudo sed -i '/PACKAGER=/s/.*/PACKAGER="Vilmar Catafesta <vcatafesta@gmail.com>"/' /etc/makepkg.conf
-        sudo sed -i '/MAKEFLAGS=/s/.*/MAKEFLAGS="-j'$(nproc)'"/' /etc/makepkg.conf
-        sudo sed -i '/GPGKEY=/s/.*/GPGKEY="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"/; t; $a GPGKEY="A0D5A8312A83940ED8B04B0F4BAC871802E960F1"' /etc/makepkg.conf
-
-        # Modify manjaro-chrootbuild
-        sudo sed -i 's|https://repo.manjaro.org/repo|https://nnenix.mm.fcix.net/manjaro|' /usr/lib/manjaro-chrootbuild/util.sh
-        sudo sed -i '/-Syy/s/-Syy/-Syy git /' /usr/lib/manjaro-chrootbuild/util-chroot.sh
-        replicate '#'
-
     - name: Download Source
       shell: bash
       run: |
         source /tmp/send_telegram_message.sh
         # Download the source code
-        if [ "${{ inputs.build_env }}" == "aur" ]; then
-          echo "Cloning AUR package from ${{ inputs.url }}"
-          git clone ${{ inputs.url }} aur_package
-          if [ -d "aur_package" ]; then
-            cd aur_package
-            if [ ! -f "PKGBUILD" ]; then
-              echo "Error: PKGBUILD not found in the AUR package"
-              exit 1
-            fi
-          else
-            echo "Error: Failed to clone AUR package"
-            exit 1
-          fi
-        elif [ -n "${{ inputs.url }}" ]; then
+        if [ -n "${{ inputs.url }}" ]; then
           echo "Cloning repository from ${{ inputs.url }}"
           git clone ${{ inputs.url }}.git source_repo
           cd source_repo
@@ -376,96 +233,62 @@ runs:
         fi
 
         # Debug: Show current directory and contents
-        echo "Current directory: $(pwd)"
-        echo "Directory contents:"
-        ls -la
+        msg_raw "Current directory: $(pwd)"
+        msg_raw "Directory contents:"
+        replicate '='
+        msg_raw 'ls -la --color=auto'
+        ls -la --color=auto
+        replicate '='
 
     - name: Build package
       shell: bash
       run: |
-        source /tmp/send_telegram_message.sh
         # Build package - Construr pacote
-        set -ex  # Isso fará o script falhar se qualquer comando falhar
+        source /tmp/send_telegram_message.sh
+        set -ex
 
         # Debug: Mostrar ambiente de build
-        msg_info "Build environment: ${{ inputs.build_env }}"
-        msg_info "Package name: ${{ inputs.package_name }}"
+        msg_raw "Build environment: ${{ inputs.build_env }}"
+        msg_raw "Package name     : ${{ inputs.package_name }}"
 
         # Se entramos em um diretório no passo anterior, vamos garantir que estamos nele
-        if [ -d "source_repo" ]; then
-          cd source_repo
-        fi
+        [[ -d "source_repo" ]] && cd source_repo
 
         # Debug: Mostrar diretório atual e conteúdo
-        msg_info "Current directory: $(pwd)"
-        msg_info "Directory contents:"
+        msg_raw "Current directory : $(pwd)"
+        msg_raw "Directory contents:"
         ls -la
 
         # Create and set permissions for $PKGDEST and $SRCDEST
         sudo mkdir -p /home/packages /home/sources
         sudo chown builduser:builduser /home/packages /home/sources
 
-        if [ "${{ inputs.build_env }}" == "aur" ]; then
-          # For packages AUR
-          cd ${{ inputs.aur_package_dir }}
-          msg_info "Construindo pacote AUR: ${{ inputs.package_name }}"
-          msg_info "Current AUR package directory: $(pwd)"
-          msg_info "AUR package directory contents:"
-          ls -la
+        gitfolder=$(find . -name "template" -exec dirname {} \;)
+        cd "$gitfolder"
 
-          # Give permissions to builduser for the current directory
-          sudo chown -R builduser:builduser .
-
-          # Create temporary directory for makepkg
-          sudo mkdir -p /tmp/makepkg
-          sudo chown builduser:builduser /tmp/makepkg
-
-          # Extract dependencies from PKGBUILD
-          depends=$(grep -E "^depends=\(" PKGBUILD | sed 's/depends=(//' | sed 's/)$//' | tr -d "'")
-          makedepends=$(grep -E "^makedepends=\(" PKGBUILD | sed 's/makedepends=(//' | sed 's/)$//' | tr -d "'")
-
-          # Instalar dependências
-          msg_info "Installing dependencies..."
-          sudo yay -Sy --asdeps --nodeps $depends $makedepends --noconfirm
-
-          # Construir o pacote sem instalar
-          msg_info "Building AUR package: ${{ inputs.package_name }}"
+        make_with_makepkg() {
+          msg "makepkg -s --noconfirm --noprogressbar --nodeps ${reset}"
           makepkg -s --noconfirm --noprogressbar --nodeps
+        }
 
-          # Mover o pacote compilado para /home/packages
-          mv *.pkg.tar.zst /home/packages/ 2>/dev/null || echo 'No package found to move'
+        make_with_chrootbuild() {
+          # Ensure architecture is set to x86_64
+          sed -i "/^arch=/c\arch=('x86_64')" PKGBUILD
+          # Build for x86_64
+          echo -e "\033[01;31mBuild x86_64\033[0m"
+          # Determinar o branch de build
+          if [ "${{ inputs.build_env }}" == "extra" ]; then
+            build_branch="testing"
+            msg_info "Ambiente de build é 'extra', usando branch 'testing' para chrootbuild"
+          else
+            build_branch="${{ inputs.branch_type }}"
+          fi
 
-          msg "Build completed. Checking /home/packages:"
-          ls -la /home/packages
-        else
-          # Para pacotes não-AUR
-          gitfolder=$(find . -name "PKGBUILD" -exec dirname {} \;)
-          cd $gitfolder
-
-          make_with_makepkg() {
-            msg "makepkg -s --noconfirm --noprogressbar --nodeps ${reset}"
-            makepkg -s --noconfirm --noprogressbar --nodeps
-          }
-
-          make_with_chrootbuild() {
-            # Ensure architecture is set to x86_64
-            sed -i "/^arch=/c\arch=('x86_64')" PKGBUILD
-            # Build for x86_64
-            echo -e "\033[01;31mBuild x86_64\033[0m"
-            # Determinar o branch de build
-            if [ "${{ inputs.build_env }}" == "extra" ]; then
-              build_branch="testing"
-              msg_info "Ambiente de build é 'extra', usando branch 'testing' para chrootbuild"
-            else
-              build_branch="${{ inputs.branch_type }}"
-            fi
-
-            # Executar chrootbuild com o branch determinado
-            sudo chrootbuild -H -p . -b ${build_branch}
-          }
-          #make_with_chrootbuild
-          make_with_makepkg
-        fi
+          # Executar chrootbuild com o branch determinado
+          sudo chrootbuild -H -p . -b ${build_branch}
+        }
+        #make_with_chrootbuild
+        make_with_makepkg
 
         # Executa comando extra, se fornecido
         if [ -n "${{ inputs.extra_command }}" ]; then
@@ -474,12 +297,19 @@ runs:
         fi
 
         # Debug: Mostrar conteúdo do diretório após o build
-        msg "Directory contents after build:"
-        ls -la
-        msg "Contents of /home/packages:"
-        ls -la /home/packages
-        msg "Contents of /home/sources:"
-        ls -la /home/sources
+        replicate '#'
+        msg_raw "Directory contents after build:"
+        msg_raw 'ls -la --color=auto'
+        ls -la --color=auto
+        replicate '#'
+        msg_raw "Contents of /home/packages:"
+        msg_raw 'ls -la --color=auto /home/packages'
+        ls -la --color=auto /home/packages
+        replicate '#'
+        msg_raw "Contents of /home/sources:"
+        msg_raw 'ls -la --color=auto /home/sources'
+        ls -la --color=auto /home/sources
+        replicate '#'
 
     - name: Sign Package
       shell: bash
