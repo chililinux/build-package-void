@@ -101,7 +101,6 @@ env:
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
   FULL_REPOSITORY_NAME: "${{ github.repository }}"
-  SHORT_REPOSITORY_NAME: "${{ github.repository.split('/')[1] }}"
   REPO_NAME: "${{ github.repository }}"
 
 jobs:
@@ -220,9 +219,11 @@ jobs:
           START_TIMESTAMP=$(date +%s)  # Timestamp em segundos
           echo "Início do Workflow: $START_TIME"
           echo "START_TIME=$START_TIME"             >> $GITHUB_ENV
-          echo "START_TIMESTAMP=$START_TIMESTAMP"   >> $GITHUB_ENV
           echo "START_TIME='$START_TIME'"           >> shared_file.txt
+          echo "START_TIMESTAMP=$START_TIMESTAMP"   >> $GITHUB_ENV
           echo "START_TIMESTAMP='$START_TIMESTAMP'" >> shared_file.txt
+          echo "SHORT_REPOSITORY_NAME=${FULL_REPOSITORY_NAME##*/}"   >> $GITHUB_ENV
+          echo "SHORT_REPOSITORY_NAME='${FULL_REPOSITORY_NAME##*/}'" >> shared_file.txt
 
       - name: Install dependencies in HOST
         shell: bash
