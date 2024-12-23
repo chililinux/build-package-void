@@ -138,6 +138,21 @@ jobs:
           alias ls='ls -lha --color=auto'
           alias dir='ls -lha --color=auto'
 
+          msg_raw() {
+            local msg="$1"
+            msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
+
+            # Adiciona a cor amarela após o primeiro ':'
+            if [[ "$msg" == *:* ]]; then
+              local before_colon="${msg%%:*}:"
+              local after_colon="${msg#*: }"
+              msg="${cyan}${before_colon}${yellow}${after_colon}${reset}"
+            else
+              msg="${cyan}${msg}${reset}"
+            fi
+            echo -e "$msg"
+          }
+
           msg() {
             local msg="$1"
             msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
@@ -448,8 +463,8 @@ jobs:
           msg_raw 'tree -d /mnt'
           tree -d /mnt
           replicate '#'
-          msg_raw 'tree -d /'
-          tree -d /
+          msg_raw 'ls -lah --color=auto /'
+          ls -lah --color=auto /
           replicate '#'
 
       - name: Set release tag manually
@@ -506,9 +521,13 @@ jobs:
       - name: echo PayLoads
         shell: bash
         run: |
-          echo "url: $url"
-          echo "git_branch: $git_branch"
-          echo "manjaro_branch: $manjaro_branch"
+          #echo PayLoads
+          source /tmp/send_telegram_message.sh
+          replicate '='
+          msg_raw "url           : $url"
+          msg_raw "git_branch    : $git_branch"
+          msg_raw "manjaro_branch: $manjaro_branch"
+          replicate '='
 
       - name: Build and Publish Package
         if: ${{ inputs.teste_input != true }}
