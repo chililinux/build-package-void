@@ -114,6 +114,7 @@ jobs:
       - name: Enable namespaces on host
         run: |
           echo 1 | sudo tee /proc/sys/kernel/unprivileged_userns_clone
+          echo 0 > /proc/sys/kernel/apparmor_restrict_unprivileged_userns
 
       - name: Definir a função send_telegram_message no script temporário
         shell: bash
@@ -336,6 +337,16 @@ jobs:
         with:
           #fetch-depth: 0    # All commit history is downloaded
           fetch-depth: 1 # Only the most recent commit of the branch will be downloaded
+
+      - name: Sync UID/GID
+        run: |
+          USER_ID=$(id -u)
+          GROUP_ID=$(id -g)
+          groupadd -g "$GROUP_ID" hostgroup
+          useradd -u "$USER_ID" -g hostgroup hostuser
+          chown -R hostuser:hostgroup /mnt/var_lib_manjaro_tools_buildiso \
+                                      /mnt/var_cache_manjaro_tools_iso \
+                                      /mnt/lfs
 
       - name: Ajustando work_dir
         run: |
