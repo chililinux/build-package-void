@@ -215,32 +215,6 @@ runs:
         msg "$(env | sort)"
         replicate '='
 
-    - name: Config ambiente de build - Atualiza e instala dependências necessárias
-      shell: bash
-      run: |
-        # Config ambiente de build - Atualiza e instala dependências necessárias
-        {
-        echo 'repository=https://repo-fastly.voidlinux.org/current'
-        echo 'repository=https://repo-fastly.voidlinux.org/current/nonfree'
-        echo 'repository=https://repo-fastly.voidlinux.org/current/multilib'
-        echo 'repository=https://repo-fastly.voidlinux.org/current/multilib/nonfree'
-        } >> /etc/xbps.d/00-repository-main.conf
-
-        # atualizar e instalar pacotes adicionais
-        xbps-install -Sy -f \
-          tree \
-          tmate \
-          ncurses \
-          curl \
-          duf > /dev/null
-
-    - name: Setup TMATE Session
-      uses: mxschmitt/action-tmate@v3
-      if: ${{ github.event.client_payload.tmate == true || inputs.tmate == true}}
-      with:
-        install-dependencies: false
-        detached: true
-
     - name: Import GPG key
       shell: bash
       run: |
