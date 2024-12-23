@@ -114,7 +114,7 @@ jobs:
       - name: Enable namespaces on host
         run: |
           echo 1 | sudo tee /proc/sys/kernel/unprivileged_userns_clone
-          echo 0 > /proc/sys/kernel/apparmor_restrict_unprivileged_userns
+          echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
 
       - name: Definir a função send_telegram_message no script temporário
         shell: bash
