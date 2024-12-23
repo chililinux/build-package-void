@@ -495,7 +495,8 @@ jobs:
           branch_type: ${{ env.BRANCH_TYPE }}
           new_branch: ${{ env.NEW_BRANCH }}
           package_name: ${{ env.PACKAGE_NAME }}
-          url: ${{ env.url }}
+          #url: ${{ env.url }}
+          url: "https://github.com/chililinux/chili-skel"
           git_branch: ${{ env.git_branch }}
           manjaro_branch: ${{ env.manjaro_branch }}
           repo: ${{ github.repository }}
