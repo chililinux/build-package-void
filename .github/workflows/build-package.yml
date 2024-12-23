@@ -491,7 +491,7 @@ jobs:
           msg_raw "Event Action      : ${{ github.event.action }}"
           msg_raw "Edition           : ${{ github.event.client_payload.edition || inputs.edition }}"
           msg_raw "Tmate             : ${{ github.event.client_payload.tmate || inputs.tmate }}"
-          echo    "Full github event : ${{ toJson(github.event) }}"
+          echo -e "Full github event : ${{ toJson(github.event) }}"
           replicate '='
 
       - name: Display the current user in CONTAINER
