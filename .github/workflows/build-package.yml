@@ -100,8 +100,8 @@ env:
   tmate: "${{ github.event.client_payload.tmate || inputs.tmate }}"
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
-  FULL_REPOSITORY_NAME: "${{ github.repository }}"
-  SHORT_REPOSITORY_NAME: "${{ github.repository##*/ }}"
+  FULL_REPOSITORY_NAME: "${GITHUB_REPOSITORY}"
+  SHORT_REPOSITORY_NAME: "${GITHUB_REPOSITORY##*/}"
   REPO_NAME: "${{ github.repository }}"
 
 jobs:
