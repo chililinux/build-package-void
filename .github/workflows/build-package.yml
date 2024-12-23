@@ -96,6 +96,7 @@ env:
   started_by_user: "${{ github.actor }}"
   triggered_by_user: "${{ github.triggering_actor }}"
   repo_path: "${{ secrets.PKGBUILD_DIR }}"
+  link_action: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
   DEBUG: "${{ github.event.client_payload.tmate || inputs.tmate }}"
   tmate: "${{ github.event.client_payload.tmate || inputs.tmate }}"
   ACTIONS_STEP_DEBUG: true
@@ -155,24 +156,35 @@ jobs:
             fi
             echo -e "$msg"
           }
+          export -f msg_raw
 
           msg() {
             local msg="$1"
             msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
             echo -e "BIV=>${cyan}running: ${yellow}${msg}${reset}"
           }
+          export -f msg
+
+          msg_run() {
+            local msg="$1"
+            msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
+            echo -e "BIV=>${cyan}running: ${yellow}${msg}${reset}"
+          }
+          export -f msg_run
 
           msg_info() {
             local msg="$1"
             msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
             echo -e "BIV=>${yellow}info   : ${cyan}${msg}${reset}"
           }
+          export -f msg_info
 
           msg_warning() {
             local msg="$1"
             msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
             echo -e "BIV=>${red}warning: ${orange}${msg}${reset}"
           }
+          export -f msg_warning
 
           replicate() {
             local char=${1:-'#'}
@@ -255,13 +267,13 @@ jobs:
           #Set up volume directory in HOST
           source /tmp/send_telegram_message.sh
           replicate '#'
-          msg_info 'sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso'
-          msg_info 'sudo mkdir -p /mnt/var_cache_manjaro_tools_iso'
-          msg_info 'sudo mkdir -p /mnt/lfs'
+          msg_run 'sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso'
+          msg_run 'sudo mkdir -p /mnt/var_cache_manjaro_tools_iso'
+          msg_run 'sudo mkdir -p /mnt/lfs'
           sudo mkdir -p /mnt/var_lib_manjaro_tools_buildiso
           sudo mkdir -p /mnt/var_cache_manjaro_tools_iso
           sudo mkdir -p /mnt/lfs
-          msg_info 'tree -d /mnt'
+          msg_run 'tree -d /mnt'
           tree -d /mnt || true
           replicate '#'
 
@@ -269,21 +281,21 @@ jobs:
         shell: bash
         run: |
           #Enviar notificação para o Telegram
-          started_by_user="${{ github.actor }}"
-          triggered_by_user="${{ github.triggering_actor }}"
-          repo_path="${{ secrets.PKGBUILD_DIR }}"
-          link_action=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          #started_by_user="${{ github.actor }}"
+          #triggered_by_user="${{ github.triggering_actor }}"
+          #repo_path="${{ secrets.PKGBUILD_DIR }}"
+          #link_action=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
 
           MESSAGE="⭐ <b>[step 1/6] ${{env.SHORT_REPOSITORY_NAME}} - INICIANDO WORKFLOW DE CRIAÇÃO DE PACOTE</b>
           <b>Job:</b> <code>#${GITHUB_RUN_NUMBER}</code>
           <b>Job URL:</b> <a href='https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}'>${link_action}</a>
           <b>Workflow:</b> <code>${{env.SHORT_REPOSITORY_NAME}}/build-package.yml</code>
-          <b>Iniciado/Triggered:</b> <code>${started_by_user}/${triggered_by_user}</code>
+          <b>Iniciado/Triggered:</b> <code>${{env.started_by_user}}/${{env.triggered_by_user}}</code>
           <b>Inicio:</b> <code>${{ env.START_TIME }}</code>
           <b>Nome:</b> <code>${{ env.PACKAGE_NAME }}</code>
           <b>Repo Origem:</b> <code>${{ env.REPO_ORIGEM }}</code>
           <b>Branch origem:</b> <code>${{ env.BRANCH_FULLNAME }}</code>
-          <b>Repositório:</b> <code>${repo_path}</code>
+          <b>Repositório:</b> <code>${{env.repo_path}}</code>
           <b>Branch:</b> <code>${{ env.BRANCH_TYPE }}</code>"
 
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
@@ -329,9 +341,10 @@ jobs:
           msg_raw "Current user ID is  : $(id -u)"
           msg_raw "Current user details: $(id)"
           replicate '='
+          msg_run 'duf || true'
           duf || true
           replicate '='
-          echo 'ls -lha --color=auto /mnt || true'
+          msg_run 'ls -lha --color=auto /mnt || true'
           ls -lha --color=auto /mnt || true
           replicate '='
 
