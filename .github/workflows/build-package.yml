@@ -97,8 +97,10 @@ env:
   triggered_by_user: "${{ github.triggering_actor }}"
   repo_path: "${{ secrets.PKGBUILD_DIR }}"
   link_action: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-  DEBUG: "${{ github.event.client_payload.tmate || inputs.tmate }}"
-  tmate: "${{ github.event.client_payload.tmate || inputs.tmate }}"
+  #DEBUG: "${{ github.event.client_payload.tmate || inputs.tmate }}"
+  #tmate: "${{ github.event.client_payload.tmate || inputs.tmate }}"
+  DEBUG: true
+  tmate: true
   ACTIONS_STEP_DEBUG: true
   ACTIONS_RUNNER_DEBUG: true
   FULL_REPOSITORY_NAME: "${{ github.repository }}"
@@ -491,7 +493,7 @@ jobs:
           echo -e "Event Action      : ${{ github.event.action }}"
           echo -e "Edition           : ${{ github.event.client_payload.edition || inputs.edition }}"
           echo -e "Tmate             : ${{ github.event.client_payload.tmate || inputs.tmate }}"
-          echo -e "Full github event : ${{ toJson(github.event) }}"
+          #echo -e "Full github event : ${{ toJson(github.event) }}"
           replicate '='
 
       - name: Display the current user in CONTAINER
