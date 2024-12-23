@@ -350,6 +350,37 @@ jobs:
           install-dependencies: false
           detached: true
 
+      - name: Download artifact shared-file
+        uses: actions/download-artifact@v4
+        with:
+          name: shared-file
+
+      - name: Baixar artifact send-telegram-script
+        uses: actions/download-artifact@v4
+        with:
+          name: send-telegram-script
+
+      - name: Tornar o script executável e mover o script para /tmp/
+        run: |
+          #Tornar o script executável e mover o script para /tmp/
+          chmod +x send_telegram_message.sh
+          mkdir -p /tmp
+          mv send_telegram_message.sh /tmp/
+
+      - name: Exibir e carregar variáveis do arquivo shared_file.txt no CONTAINER
+        shell: bash
+        run: |
+          #Exibir e carregar variáveis do arquivo shared_file.txt no CONTAINER
+          cat shared_file.txt
+          # Atribuir o conteúdo do arquivo à variável START_TIME
+          #START_TIME="$(<shared_file.txt)"
+          source shared_file.txt
+          # Definir a variável START_TIME para outros jobs
+          echo "START_TIME=$START_TIME"                       >> $GITHUB_ENV
+          echo "START_TIMESTAMP=$START_TIMESTAMP"             >> $GITHUB_ENV
+          echo "ISO_BRANCH=$ISO_BRANCH"                       >> $GITHUB_ENV
+          echo "SHORT_REPOSITORY_NAME=$SHORT_REPOSITORY_NAME" >> $GITHUB_ENV
+
       - name: Create user builduser in CONTAINER
         run: |
           #Create user builduser in container
@@ -386,36 +417,6 @@ jobs:
           #Ajustando work_dir
           ln -sf /__w/${{env.SHORT_REPOSITORY_NAME}}/${{env.SHORT_REPOSITORY_NAME}} /work_dir
           echo "WORK_DIR=/work_dir" >> $GITHUB_ENV
-
-      - name: Download artifact shared-file
-        uses: actions/download-artifact@v4
-        with:
-          name: shared-file
-
-      - name: Baixar artifact send-telegram-script
-        uses: actions/download-artifact@v4
-        with:
-          name: send-telegram-script
-
-      - name: Tornar o script executável e mover o script para /tmp/
-        run: |
-          #Tornar o script executável e mover o script para /tmp/
-          chmod +x send_telegram_message.sh
-          mkdir -p /tmp
-          mv send_telegram_message.sh /tmp/
-
-      - name: Exibir e carregar variáveis do arquivo shared_file.txt no CONTAINER
-        shell: bash
-        run: |
-          #Exibir e carregar variáveis do arquivo shared_file.txt no CONTAINER
-          cat shared_file.txt
-          # Atribuir o conteúdo do arquivo à variável START_TIME
-          #START_TIME="$(<shared_file.txt)"
-          source shared_file.txt
-          # Definir a variável START_TIME para outros jobs
-          echo "START_TIME=$START_TIME"           >> $GITHUB_ENV
-          echo "START_TIMESTAMP=$START_TIMESTAMP" >> $GITHUB_ENV
-          echo "ISO_BRANCH=$ISO_BRANCH"           >> $GITHUB_ENV
 
       - name: Set up volume directory in CONTAINER
         run: |
@@ -515,12 +516,16 @@ jobs:
           fi
 
       - name: Fetch all branches
+        shell: bash
         run: |
+          #Fetch all branches
           git fetch --all
           git fetch origin '+refs/heads/*:refs/remotes/origin/*'
 
       - name: Checkout to specified branch or create if not exists
+        shell: bash
         run: |
+          #Checkout to specified branch or create if not exists
           if git ls-remote --exit-code --heads origin ${{ env.NEW_BRANCH }}; then
             git checkout ${{ env.NEW_BRANCH }}
           else
