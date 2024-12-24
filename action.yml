@@ -162,7 +162,7 @@ runs:
         echo "Last commit hash: $COMMIT_HASH"
 
         # Buscar informações do commit remoto
-        git fetch $REPO_URL $COMMIT_HASH
+        msg_run "git fetch $REPO_URL $COMMIT_HASH"
 
         # Obter a mensagem do commit a partir do hash
         COMMIT_MESSAGE="$(git log -1 --format=%B $COMMIT_HASH)"
@@ -206,38 +206,32 @@ runs:
         # Debug Inputs
         source /tmp/send_telegram_message.sh
         replicate '='
-        msg "DEBUG: All inputs"
-        msg "${{ toJson(inputs) }}"
-        msg "DEBUG: build_env from input: ${{ inputs.build_env }}"
-        msg "DEBUG: build_env from env: $DEBUG_BUILD_ENV"
-        msg "DEBUG: tmate input: ${{ inputs.tmate }}"
-        msg "DEBUG: All env variables"
-        msg "$(env | sort)"
+        msg_raw "All inputs"
+        msg_raw "${{ toJson(inputs) }}"
+        msg_raw "build_env from input: ${{ inputs.build_env }}"
+        msg_raw "build_env from env: $DEBUG_BUILD_ENV"
+        msg_raw "tmate input: ${{ inputs.tmate }}"
+        msg_raw "All env variables"
+        msg_raw "$(env | sort)"
         replicate '='
 
     - name: Download Source
       shell: bash
       run: |
-        source /tmp/send_telegram_message.sh
         # Download the source code
+        source /tmp/send_telegram_message.sh
+        replicate '='
         if [ -n "${{ inputs.url }}" ]; then
-          echo "Cloning repository from ${{ inputs.url }}"
-          git clone ${{ inputs.url }}.git source_repo
-          cd source_repo
+          msg_run "git clone ${{ inputs.url }}.git source_repo"
+          msg_run 'cd source_repo'
           if [ -n "${{ inputs.git_branch }}" ]; then
-            echo "Checking out branch ${{ inputs.git_branch }}"
-            git checkout ${{ inputs.git_branch }}
+            msg_run "git checkout ${{ inputs.git_branch }}"
           fi
         else
-          echo "No URL provided, assuming we're already in the correct repository"
+          msg_warning "No URL provided, assuming we're already in the correct repository"
         fi
 
-        # Debug: Show current directory and contents
-        msg_raw "Current directory: $(pwd)"
-        msg_raw "Directory contents:"
-        replicate '='
-        msg_raw 'ls -la --color=auto'
-        ls -la --color=auto
+        msg_run "ls -lah --color=auto $PWD"
         replicate '='
 
     - name: Build package
@@ -254,40 +248,35 @@ runs:
         # Se entramos em um diretório no passo anterior, vamos garantir que estamos nele
         [[ -d "source_repo" ]] && cd source_repo
 
-        # Debug: Mostrar diretório atual e conteúdo
-        msg_raw "Current directory : $(pwd)"
-        msg_raw "Directory contents:"
-        ls -la
+        replicate '='
+        msg_run "ls -lah --color=auto $PWD"
+        replicate '='
 
         # Create and set permissions for $PKGDEST and $SRCDEST
-        sudo mkdir -p /home/packages /home/sources
-        sudo chown builduser:builduser /home/packages /home/sources
+        msg_run 'sudo mkdir -p /home/packages /home/sources'
+        msg_run 'sudo chown builduser:builduser /home/packages /home/sources'
 
         gitfolder=$(find . -name "template" -exec dirname {} \;)
         cd "$gitfolder"
 
-        msg "makepkg -s --noconfirm --noprogressbar --nodeps ${reset}"
-        makepkg -s --noconfirm --noprogressbar --nodeps
+        msg_run 'makepkg -s --noconfirm --noprogressbar --nodeps'
 
         # Executa comando extra, se fornecido
         if [ -n "${{ inputs.extra_command }}" ]; then
-          msg "Executando comando extra: ${{ inputs.extra_command }}"
-          ${{ inputs.extra_command }}
+          msg_raw "Executando comando extra: ${{ inputs.extra_command }}"
+          eval "${{ inputs.extra_command }}"
         fi
 
         # Debug: Mostrar conteúdo do diretório após o build
         replicate '#'
         msg_raw "Directory contents after build:"
-        msg_raw 'ls -la --color=auto'
-        ls -la --color=auto
+        msg_run 'ls -la --color=auto' || true
         replicate '#'
         msg_raw "Contents of /home/packages:"
-        msg_raw 'ls -la --color=auto /home/packages'
-        ls -la --color=auto /home/packages
+        msg_run 'ls -la --color=auto /home/packages' || true
         replicate '#'
         msg_raw "Contents of /home/sources:"
-        msg_raw 'ls -la --color=auto /home/sources'
-        ls -la --color=auto /home/sources
+        msg_run 'ls -la --color=auto /home/sources' || true
         replicate '#'
 
     - name: Sign Package
@@ -295,7 +284,7 @@ runs:
       run: |
         # Sign Package
         source /tmp/send_telegram_message.sh
-        ls -lah
+        msg_run 'ls -lah --color=auto'
         if [ "${{ inputs.build_env }}" == "aur" ]; then
           # Para pacotes AUR
           cd /home/packages
@@ -303,30 +292,30 @@ runs:
           # Para pacotes não-AUR
           gitfolder=$(find . -name "*.zst" -exec dirname {} \;)
           if [ -z "$gitfolder" ]; then
-            echo "Arquivo de pacote '.zst' não encontrado. Usando diretório atual."
+            msg_warning "Arquivo de pacote '.zst' não encontrado. Usando diretório atual."
             gitfolder="."
           fi
           cd "$gitfolder"
         fi
 
-        ls -lah
+        msg_run 'ls -lah --color=auto'
         # Assina todos os pacotes encontrados
         # Import GPG key
         if gpg --batch --import <<< "${{ inputs.gpg_key }}"; then
-          echo -e "\033[01;32m=>Importação da chave GPG foi bem-sucedida. ${RESET}"
+          msg_ok 'Importação da chave GPG foi bem-sucedida.'
         else
-          echo -e "\033[01;31m=>Erro na importação da chave GPG. ${RESET}"
+          msg_warning 'Erro na importação da chave GPG.'
           exit 1
         fi
 
         for p in *.zst; do
-          echo -e "\033[01;36mAssinando pacote: $p ${RESET}"
+          msg_raw "Assinando pacote: $p"
           gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg_passphrase }}" --detach-sign "${p}"
         done
 
         # Lista os arquivos .sig gerados
-        echo "Arquivos de assinatura gerados:"
-        ls -lah *.sig* || echo "Nenhum arquivo .sig encontrado"
+        msg_raw 'Arquivos de assinatura gerados:'
+        msg_run 'ls -lah *.sig*' || msg_warning "Nenhum arquivo .sig encontrado"
 
     # Gera checksums para os pacotes
     - name: Generate checksums
@@ -349,22 +338,22 @@ runs:
         # Gera checksums para pacotes e assinaturas
         for i in *.pkg.tar.zst; do
           if [[ -f "$i" ]]; then
-            echo -e "\033[01;36mGerado MD5 para: $i ${RESET}"
+            msg_raw "Gerado MD5 para: $i"
             md5sum "$i"     >> "$i.md5"
             md5sum "$i.sig" >> "$i.sig.md5"
-            echo -e "\033[01;36mMD5 gerado para: $i ${RESET}"
+            msg_raw "MD5 gerado para: $i"
           fi
         done
 
         # Lista os arquivos MD5 gerados
-        echo "Arquivos MD5 gerados:"
-        ls -l *.md5 || echo "Nenhum arquivo MD5 encontrado"
+        msg_ok "Arquivos MD5 gerados:"
+        msg_run 'ls -l *.md5' || msg_warning "Nenhum arquivo MD5 encontrado"
 
-    # Publish the package on GitHub
     - name: Publish Package on GitHub
       if: inputs.publish_github == 'true' && inputs.build_env != 'aur'
       shell: bash
       run: |
+        # Publish the package on GitHub
         source /tmp/send_telegram_message.sh
         gitfolder=$(find . -name "*.zst" -exec dirname {} \;)
         cd $gitfolder
@@ -404,14 +393,14 @@ runs:
         echo "url=${{ inputs.url }}"
 
         if [ -n "$repo" ] && [ -n "$release" ]; then
-          echo "Using repository: $repo"
-          echo "Creating release: $release"
+          msg_raw "Using repository: $repo"
+          msg_raw "Creating release: $release"
           gh release create ${release} --title ${release} --repo ${repo} --notes "automated release from ${{ inputs.url }}" || echo "release already exists"
           for i in .zst .sig .tar .md5; do
             find -iname "*$i" -exec gh release upload ${release} --repo ${repo} --clobber {} \;
           done
         else
-          echo "Error: repo or release is empty"
+          msg_warning "Error: repo or release is empty"
           exit 1
         fi
 

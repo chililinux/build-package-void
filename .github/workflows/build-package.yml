@@ -168,6 +168,13 @@ jobs:
           }
           export -f msg
 
+          msg_ok() {
+            local msg="$1"
+            msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
+            echo -e "BIV=>${cyan}feito: ${green}${msg}${reset}"
+          }
+          export -f msg_ok
+
           msg_run() {
             local msg="$1"
             msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
