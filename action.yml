@@ -224,7 +224,7 @@ runs:
         msg_run 'pushd /home/builduser/chili-void-packages/srcpkgs/'
         if [ -n "${{ inputs.url }}" ]; then
           msg_run "git clone --depth=1 ${{ inputs.url }}.git"
-          msg_run "sudo chown builduser:builduser ${{ inputs.url }} -R"
+          msg_run "sudo chown builduser:builduser ${{ inputs.package_name }} -R"
           msg_run "ls -lah --color=auto ${{ inputs.url }}"
         else
           msg_warning "No URL provided, assuming we're already in the correct repository"
