@@ -222,7 +222,7 @@ runs:
         source /tmp/send_telegram_message.sh
         replicate '='
         if [ -n "${{ inputs.url }}" ]; then
-          msg_run "git clone ${{ inputs.url }}.git source_repo"
+          msg_run "git clone --depth=1 ${{ inputs.url }}.git source_repo"
           msg_run 'cd source_repo'
           if [ -n "${{ inputs.git_branch }}" ]; then
             msg_run "git checkout ${{ inputs.git_branch }}"
@@ -234,12 +234,15 @@ runs:
         msg_run "ls -lah --color=auto $PWD"
         replicate '='
 
+        die 'teste'
+
+
     - name: Build package
       shell: bash
       run: |
         # Build package - Construr pacote
         source /tmp/send_telegram_message.sh
-        set -ex
+        #set -e
 
         # Debug: Mostrar ambiente de build
         msg_raw "Build environment: ${{ inputs.build_env }}"
@@ -259,8 +262,10 @@ runs:
         gitfolder=$(find . -name "template" -exec dirname {} \;)
         cd "$gitfolder"
 
-        msg_run 'makepkg -s --noconfirm --noprogressbar --nodeps'
-
+        msg_run 'echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf'
+        msg_run './xbps-src binary-bootstrap'
+        msg_run './xbps-src pkg <package_name>'
+'
         # Executa comando extra, se fornecido
         if [ -n "${{ inputs.extra_command }}" ]; then
           msg_raw "Executando comando extra: ${{ inputs.extra_command }}"

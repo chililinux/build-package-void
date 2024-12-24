@@ -141,6 +141,14 @@ jobs:
           alias ls='ls -lha --color=auto'
           alias dir='ls -lha --color=auto'
 
+          die() {
+            local msg="$1"
+            msg="$(sed 's/<[^>]*>//g' <<< "$msg")" # Remove as tags HTML
+            echo -e "BIV=>${cyan}error: ${red}${msg}${reset}"
+            exit  1
+          }
+          export -f die
+
           msg_raw() {
             local msg="$1"
             # Remove tags HTML, se existirem
