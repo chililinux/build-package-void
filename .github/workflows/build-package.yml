@@ -31,9 +31,9 @@ name: 📦 VoidLinux Build Packages
 
 # Gatilhos para o workflow
 on:
-  push:
-    branches:
-      - main
+#  push:
+#    branches:
+#      - main
   repository_dispatch: # aguarda um evento externo para iniciar o workflow (útil para automações externas que acionam o GitHub Actions).
     types:
       - "*"
@@ -84,8 +84,7 @@ on:
 env:
   BRANCH_TYPE: "${{ github.event.client_payload.branch_type || github.event.inputs.branch_type }}"
   NEW_BRANCH: "${{ github.event.client_payload.branch || github.event.inputs.new_branch }}"
-  #PACKAGE_NAME: "${{ github.event.action }}"
-  PACKAGE_NAME: 'chili-skel'
+  PACKAGE_NAME: "${{ github.event.action }}"
   BRANCH_ORIGEM: "${{ github.ref_name }}"
   REPO_ORIGEM: "${{ github.event.client_payload.url }}"
   BRANCH_FULLNAME: "${{ github.event.client_payload.branch }}"
@@ -461,7 +460,6 @@ jobs:
           replicate '='
           msg_raw "Event Name        : ${{ github.event_name }}"
           msg_raw "Event Action      : ${{ github.event.action }}"
-          msg_raw "Edition           : ${{ github.event.client_payload.edition || inputs.edition }}"
           msg_raw "DEBUG             : ${{ env.DEBUG }}"
           msg_raw "Tmate             : ${{ env.tmate }}"
           replicate '='
@@ -586,9 +584,9 @@ jobs:
           #echo PayLoads
           source /tmp/send_telegram_message.sh
           replicate '='
+          msg_raw "pacote        : ${{env.PACKAGE_NAME}}"
           msg_raw "url           : $url"
           msg_raw "git_branch    : $git_branch"
-          msg_raw "manjaro_branch: $manjaro_branch"
           replicate '='
 
       - name: Build and Publish Package
@@ -603,7 +601,6 @@ jobs:
           #url: ${{ env.url }}
           url: "https://github.com/chililinux/chili-skel"
           git_branch: ${{ env.git_branch }}
-          manjaro_branch: ${{ env.manjaro_branch }}
           repo: ${{ github.repository }}
 
           # Parâmetros relacionados ao debug e tmate
