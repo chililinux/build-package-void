@@ -265,7 +265,7 @@ runs:
         msg_run 'echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf'
         msg_run './xbps-src binary-bootstrap'
         msg_run './xbps-src pkg <package_name>'
-'
+
         # Executa comando extra, se fornecido
         if [ -n "${{ inputs.extra_command }}" ]; then
           msg_raw "Executando comando extra: ${{ inputs.extra_command }}"
