@@ -252,7 +252,7 @@ runs:
           pushd /home/builduser/chili-void-packages/ || exit 1
           echo "XBPS_ALLOW_RESTRICTED=yes" >> etc/conf
           ./xbps-src binary-bootstrap
-          ./xbps-src pkg "${inputs.package_name}"
+          ./xbps-src pkg "${{inputs.package_name}}"
           popd || true
         EOF
 
