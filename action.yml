@@ -221,22 +221,17 @@ runs:
         # Download the source code
         source /tmp/send_telegram_message.sh
         replicate '='
+        msg_run 'pushd /home/builduser/chili-void-packages/srcpkgs/'
         if [ -n "${{ inputs.url }}" ]; then
-          msg_run "git clone --depth=1 ${{ inputs.url }}.git source_repo"
-          msg_run 'cd source_repo'
-          if [ -n "${{ inputs.git_branch }}" ]; then
-            msg_run "git checkout ${{ inputs.git_branch }}"
-          fi
+          msg_run "git clone --depth=1 ${{ inputs.url }}.git"
         else
           msg_warning "No URL provided, assuming we're already in the correct repository"
         fi
-
+        msg_run 'pushd /home/builduser/chili-void-packages/'
         msg_run "ls -lah --color=auto $PWD"
         replicate '='
-
-
+        msg_run 'popd' || true
         die 'teste'
-
 
     - name: Build package
       shell: bash
