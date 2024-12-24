@@ -249,8 +249,8 @@ runs:
         replicate '='
 
         msg_run 'echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf'
-        msg_run './xbps-src binary-bootstrap'
-        msg_run "./xbps-src pkg ${{ inputs.package_name }}"
+        su - builduser -c "msg_run './xbps-src binary-bootstrap'"
+        su - builduser -c "msg_run \"./xbps-src pkg ${inputs.package_name}\""
 
         # Executa comando extra, se fornecido
         if [ -n "${{ inputs.extra_command }}" ]; then
