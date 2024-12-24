@@ -224,14 +224,13 @@ runs:
         msg_run 'pushd /home/builduser/chili-void-packages/srcpkgs/'
         if [ -n "${{ inputs.url }}" ]; then
           msg_run "git clone --depth=1 ${{ inputs.url }}.git"
+          msg_run "sudo chown builduser:builduser ${{ inputs.url }} -R"
+          msg_run "ls -lah --color=auto ${{ inputs.url }}"
         else
           msg_warning "No URL provided, assuming we're already in the correct repository"
         fi
-        msg_run 'pushd /home/builduser/chili-void-packages/'
-        msg_run "ls -lah --color=auto $PWD"
         replicate '='
         msg_run 'popd' || true
-        die 'teste'
 
     - name: Build package
       shell: bash
@@ -244,23 +243,14 @@ runs:
         msg_raw "Build environment: ${{ inputs.build_env }}"
         msg_raw "Package name     : ${{ inputs.package_name }}"
 
-        # Se entramos em um diretório no passo anterior, vamos garantir que estamos nele
-        [[ -d "source_repo" ]] && cd source_repo
-
+        msg_run 'pushd /home/builduser/chili-void-packages/'
         replicate '='
         msg_run "ls -lah --color=auto $PWD"
         replicate '='
 
-        # Create and set permissions for $PKGDEST and $SRCDEST
-        msg_run 'sudo mkdir -p /home/packages /home/sources'
-        msg_run 'sudo chown builduser:builduser /home/packages /home/sources'
-
-        gitfolder=$(find . -name "template" -exec dirname {} \;)
-        cd "$gitfolder"
-
         msg_run 'echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf'
         msg_run './xbps-src binary-bootstrap'
-        msg_run './xbps-src pkg <package_name>'
+        msg_run "./xbps-src pkg ${{ inputs.package_name }}"
 
         # Executa comando extra, se fornecido
         if [ -n "${{ inputs.extra_command }}" ]; then
@@ -279,6 +269,8 @@ runs:
         msg_raw "Contents of /home/sources:"
         msg_run 'ls -la --color=auto /home/sources' || true
         replicate '#'
+
+        die 'teste'
 
     - name: Sign Package
       shell: bash
