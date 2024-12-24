@@ -248,9 +248,13 @@ runs:
         msg_run "ls -lah --color=auto $PWD" || true
         replicate '='
 
-        msg_run 'echo XBPS_ALLOW_RESTRICTED=yes >> etc/conf'
-        su - builduser -c './xbps-src binary-bootstrap'
-        su - builduser -c "./xbps-src pkg ${inputs.package_name}"
+        su - builduser <<EOF
+          pushd /home/builduser/chili-void-packages/ || exit 1
+          echo "XBPS_ALLOW_RESTRICTED=yes" >> etc/conf
+          ./xbps-src binary-bootstrap
+          ./xbps-src pkg "${inputs.package_name}"
+          popd || true
+        EOF
 
         # Executa comando extra, se fornecido
         if [ -n "${{ inputs.extra_command }}" ]; then
